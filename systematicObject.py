@@ -7,6 +7,7 @@ class systematicObject(object):
         
         if dic and isinstance(dic, dict):
             self._dic = dic
+
     
     @property
     def name(self):

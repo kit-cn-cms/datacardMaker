@@ -223,4 +223,6 @@ class processObject(object):
         if systname in self._uncertainties:
             return self._uncertainties[systname]
         else:
+
             return ""
+
