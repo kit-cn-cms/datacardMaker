@@ -34,30 +34,30 @@ class categoryObject:
         systIdentifier      --  string that is to be replaced with the nuisance parameter name in the keys
         """
         
-        self._name_     = categoryName
-        self._nomkey_   = defaultnominalkey
-        self._systkey_  = systkey
-        self._procIden_ = processIdentifier
-        self._chIden_   = channelIdentifier
-        self._systIden_ = systIdentifier
-        self._data_obs_ = None
-        self._signalprocs_ = []
-        self._bkgprocs_    = []
+        self._name     = categoryName
+        self._nomkey   = defaultnominalkey
+        self._systkey  = systkey
+        self._procIden = processIdentifier
+        self._chIden   = channelIdentifier
+        self._systIden = systIdentifier
+        self._data_obs = None
+        self._signalprocs = []
+        self._bkgprocs    = []
         
         #check if process/channel identifiers are in nominal histo key
-        if not self._procIden_ in self._nomkey_:
+        if self._procIden in self._nomkey:
             print "WARNING:\tProcess identifier is still part of nominal histo key!"
-        if self._chIden_ in self._nomkey_:
+        if self._chIden in self._nomkey:
             print "WARNING:\tChannel identifier is still part of nominal histo key! Will replace it"
-            self._nomkey_ = self._nomkey_.replace(self._chIden_, self._name_)
+            self._nomkey = self._nomkey.replace(self._chIden, self._name)
         
         #check if systematics/process/channel identifiers are in systematics histo key
-        if not self._systIden_ in self._systkey_:
+        if not self._systIden in self._systkey:
             print "WARNING:\tSystematic identifier still not part of nominal histo key!"
-        if self._chIden_ in self._systkey__:
+        if self._chIden in self._systkey:
             print "WARNING:\tChannel identifier is still part of systematic histo key! Will replace it"
-            self._systkey__ = self._systkey__.replace(self._chIden_, self._name_)
-        if not self._systIden_ in self._systkey_:
+            self._systkey = self._systkey.replace(self._chIden, self._name)
+        if not self._systIden in self._systkey:
             print "WARNING:\tSystematic identifier still not part of nominal histo key!"
         
         #if a list of signal processes is given, add them with default vals
@@ -74,48 +74,48 @@ class categoryObject:
         
         
     def add_signal_process( self, name, rootfile, 
-                            histoname = self._nomkey_, 
-                            systkey = self._systkey_):
+                            histoname = self._nomkey, 
+                            systkey = self._systkey):
         """
         add a signal process. Calls function add_process with 
         list of signal processes
         """
-        self.add_process(   dic = self._signalprocs_, name = name,
+        self.add_process(   dic = self._signalprocs, name = name,
                             rootfile = rootfile, histoname = histoname,
                             systkey = systkey)      
     
     def add_background_process( self, name, rootfile, 
-                                histoname = self._nomkey_, 
-                                systkey = self._systkey_):
+                                histoname = self._nomkey, 
+                                systkey = self._systkey):
         """
         add a background process. Calls function add_process with 
         list of background processes
         """
                                     
-        self.add_process(   dic = self._bkgprocs_, name = name,
+        self.add_process(   dic = self._bkgprocs, name = name,
                             rootfile = rootfile, histoname = histoname,
                             systkey = systkey)
                             
     def add_process(self, dic, name, rootfile, 
-                    histoname = self._nomkey_, systkey = self._systkey_
+                    histoname = self._nomkey, systkey = self._systkey
                     ):
         changedKey = False
-        if self._procIden_ in histoname:
+        if self._procIden in histoname:
             print "WARNING:\tProcess identifier is still part of nominal histo key! Will replace it"
-            histoname = histoname.replace(self._procIden_, name)
-        if self._chIden_ in histoname:
+            histoname = histoname.replace(self._procIden, name)
+        if self._chIden in histoname:
             print "WARNING:\tChannel identifier is still part of nominal histo key! Will replace it"
-            histoname = histoname.replace(self._chIden_, name)
-        if self._procIden_ in systkey:
+            histoname = histoname.replace(self._chIden, name)
+        if self._procIden in systkey:
             print "WARNING:\tProcess identifier is still part of nominal histo key! Will replace it"
-            systkey = systkey.replace(self._procIden_, name)
-        if self._chIden_ in systkey:
+            systkey = systkey.replace(self._procIden, name)
+        if self._chIden in systkey:
             print "WARNING:\tChannel identifier is still part of nominal histo key! Will replace it"
-            systkey = systkey.replace(self._chIden_, name)
+            systkey = systkey.replace(self._chIden, name)
             
-        controlNomKey = self._nomkey_.replace(self._procIden_, name)
-        controlSysKey = self._systkey_.replace(self._procIden_, name)
-        if not (histoname = self._nomkey_ and systkey = self._systkey_):
+        controlNomKey = self._nomkey.replace(self._procIden, name)
+        controlSysKey = self._systkey.replace(self._procIden, name)
+        if not (histoname = self._nomkey and systkey = self._systkey):
             changedKey = True
         
         if name in dic:
