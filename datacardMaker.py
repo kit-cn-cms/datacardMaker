@@ -1,35 +1,31 @@
 import sys
 from os import path
 
-directory = path.abspath(path.join(path.dirname("./"), "."))
+directory = path.abspath(path.realpath(path.dirname(__file__)))
 if not directory in sys.path:
     sys.path.append(directory)
 
-from processObject import *
-from systematicObject import *
-from categoryObject import *
+from categoryObject import categoryObject
 
 class datacardMaker:
-    
-    def __init__(self):
-        self._header_       = []
-        self._bins_         = ""
-        self._observation_  = ""
-        self._processes_    = []
-        
-        
-    def __init__(   self, pathToDatacard, 
+            
+    def __init__(   self, pathToDatacard = None, 
                     processIdentifier = "$PROCESS",
                     channelIdentifier = "$CHANNEL",
                     systIdentifier = "$SYSTEMATIC"):
-        if os.path.exists(pathToDatacard):
-            
-            
-            
+        self._header        = []
+        self._bins          = ""
+        self._observation   = ""
+        self._categories     = []
+        if pathToDatacard:
+            self.load_from_file(pathToDatacard)
+
+
+    def load_from_file(self, pathToDatacard):
+        if path.exists(pathToDatacard):
             print "loading datacard from", pathToDatacard
             with open(pathToDatacard) as datacard:
                 lines = datacard.read().splitlines()
-                self._header_ = []
                 self._shapelines_ = []
                 for n, line in enumerate(lines):
                     if line.startswith("-"):
@@ -38,12 +34,12 @@ class datacardMaker:
                             line.startswith("imax") or
                             line.startswith("kmax") or
                             line.startswith("jmax"):
-                        self._header_.append(line)
+                        self._header.append(line)
                     elif    line.startswith("bin") and
                             n != len(lines) and
                             lines[n+1].startswith("observation"):
-                        self._bins_ = line
-                        self._observation_ = lines[n+1]
+                        self._bins = line
+                        self._observation = lines[n+1]
                     elif line.startswith("shapes"):
                         self._shapelines_.append(line)
                     elif    line.startswith("process") and
