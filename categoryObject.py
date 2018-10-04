@@ -4,9 +4,20 @@ directory = path.abspath(path.join(path.dirname("./"), "."))
 if not directory in sys.path:
     sys.path.append(directory)
 
-from processObject import *
+from processObject import processObject
 
-class categoryObject:
+class categoryObject(object):
+
+    # def __init__(self):
+    #     self._name     = "categoryName"
+    #     self._nomkey   = "defaultnominalkey"
+    #     self._systkey  = "systkey"
+    #     self._procIden = "processIdentifier"
+    #     self._chIden   = "channelIdentifier"
+    #     self._systIden = "systIdentifier"
+    #     self._data_obs = None
+    #     self._signalprocs = {}
+    #     self._bkgprocs    = {}
     
     def __init__(   self, categoryName, defaultRootFile, 
                     defaultnominalkey,
@@ -33,17 +44,15 @@ class categoryObject:
         channelIdentifier   --  string that is to be replaced with the channel name in the keys
         systIdentifier      --  string that is to be replaced with the nuisance parameter name in the keys
         """
-        
+        # self.__init__()
         self._name     = categoryName
         self._nomkey   = defaultnominalkey
         self._systkey  = systkey
         self._procIden = processIdentifier
         self._chIden   = channelIdentifier
         self._systIden = systIdentifier
-        self._data_obs = None
-        self._signalprocs = []
-        self._bkgprocs    = []
         
+
         #check if process/channel identifiers are in nominal histo key
         if self._procIden in self._nomkey:
             print "WARNING:\tProcess identifier is still part of nominal histo key!"
@@ -71,35 +80,62 @@ class categoryObject:
             for proc in listOfBkg:
                 self.add_background_process(name = proc,
                                         rootfile = defaultRootFile)
+    
+    @property
+    def n_signal_procs(self):
+        return len(self._signalprocs)
+
+    @property
+    def n_background_procs(self):
+        return len(self._bkgprocs)
+    
+    @property
+    def name(self):
+        return self._name
+    @name.setter
+    def name(self, val):
+        self._name = val
+    
         
-        
+    
     def add_signal_process( self, name, rootfile, 
-                            histoname = self._nomkey, 
-                            systkey = self._systkey):
+                            histoname = None, 
+                            systkey = None):
         """
         add a signal process. Calls function add_process with 
         list of signal processes
         """
+        if histoname is None:
+            histoname = self._nomkey
+        if systkey is None:
+            systkey = self._systkey
         self.add_process(   dic = self._signalprocs, name = name,
                             rootfile = rootfile, histoname = histoname,
                             systkey = systkey)      
     
     def add_background_process( self, name, rootfile, 
-                                histoname = self._nomkey, 
-                                systkey = self._systkey):
+                                histoname = None, 
+                                systkey = None):
         """
         add a background process. Calls function add_process with 
         list of background processes
         """
-                                    
+        if histoname is None:
+            histoname = self._nomkey
+        if systkey is None:
+            systkey = self._systkey                            
         self.add_process(   dic = self._bkgprocs, name = name,
                             rootfile = rootfile, histoname = histoname,
                             systkey = systkey)
                             
     def add_process(self, dic, name, rootfile, 
-                    histoname = self._nomkey, systkey = self._systkey
+                    histoname = None, systkey = None
                     ):
         changedKey = False
+        if histoname is None:
+            histoname = self._nomkey
+        if systkey is None:
+            systkey = self._systkey  
         if self._procIden in histoname:
             print "WARNING:\tProcess identifier is still part of nominal histo key! Will replace it"
             histoname = histoname.replace(self._procIden, name)
@@ -115,8 +151,41 @@ class categoryObject:
             
         controlNomKey = self._nomkey.replace(self._procIden, name)
         controlSysKey = self._systkey.replace(self._procIden, name)
-        if not (histoname = self._nomkey and systkey = self._systkey):
+        if not (histoname == self._nomkey and systkey == self._systkey):
             changedKey = True
         
         if name in dic:
             print ""
+
+    #overloaded functions if input variable is a process
+    def add_signal_process( self, process):
+        """
+        add a signal process. Calls function add_process with 
+        list of signal processes
+        """
+        self.add_process(   dic = self._signalprocs, process = process)      
+    
+    def add_background_process( self, process):
+        """
+        add a background process. Calls function add_process with 
+        list of background processes
+        """
+                                    
+        self.add_process(   dic = self._bkgprocs, process = process)
+                            
+    def add_process(self, dic, process):
+        if isinstance(process, processObject):
+            dic[process.name] = process
+        else:
+            print "ERROR: Category can only contain processes!"
+
+    def __str__(self):
+        s = []
+        s.append("Category Name:\t%s" % self._name)
+        s.append("List of signal processes:")
+        for sig in self._signalprocs:
+            s.append("\t%s" % self._signalprocs[sig])
+
+        s.append("List of background processes:")
+        for bkg in self._bkgprocs:
+            s.append("\t%s" % self._bkgprocs[bkg])
