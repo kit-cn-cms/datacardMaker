@@ -10,7 +10,7 @@ from systematicObject import systematicObject
 
 class datacardMaker(object):
     
-    def __init__(self):
+    def init_variables(self):
         self._header            = []
         self._bins              = ""
         self._observation       = ""
@@ -21,11 +21,11 @@ class datacardMaker(object):
         self._outputpath        = "/path/for/datacard.txt"
         self._block_separator   = "-"*130
 
-    def __init__(   self, pathToDatacard, 
+    def __init__(   self, pathToDatacard = "", 
                     processIdentifier = "$PROCESS",
                     channelIdentifier = "$CHANNEL",
                     systIdentifier = "$SYSTEMATIC"):
-        self.__init__()
+        self.init_variables()
         if pathToDatacard:
             self.load_from_file(pathToDatacard)
 

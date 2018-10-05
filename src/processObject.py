@@ -1,30 +1,48 @@
-from ROOT import TFile, TH1
+# from ROOT import TFile, TH1
 from os import path
 from sys import path as spath
 thisdir = path.realpath(path.dirname(__file__))
-basedir = path.join(thisdir, "base")
+basedir = path.join(thisdir, "../base")
 if not basedir in spath:
     spath.append(basedir)
 from helperClass import helperClass
 
-# if not path.abspath(".") in spath:
-#     spath.append(path.abspath("."))
-# from systematicObject import systematicObject
+
+
 
 class processObject(object):
     helper = helperClass()
-    _debug = False
-    def __init__(   self, processName = "", pathToRootfile = "", nominalname = "", 
-                    categoryname = ""):
-        
-        self._name              = processName
-        self._rootfile          = pathToRootfile
-        self._nominalhistname   = nominalname
-        self._categoryname      = categoryname
-        
-        self._eventcount        = self.calculate_yield()
-        self._uncertainties     = {}
+    helper._debug = 99
+    
+    def init_variables(self):
+        self._name = ""
+        self._rootfile = ""
+        self._categoryname = ""
+        self._nominalhistname = ""
+        self._systkey = ""
+        self._eventcount = -1
+        self._uncertainties = {}
+        self._debug = True
+        self._calculate_yield = False
 
+
+    def __init__(   self, processName = None, pathToRootfile = None, 
+                    nominal_hist_key = None, systematic_hist_key = None, 
+                    categoryname = None):
+        self.init_variables()
+        if not processName is None:
+            self._name              = processName
+        if not pathToRootfile is None:
+            self._rootfile          = pathToRootfile
+        if not nominal_hist_key is None:
+            self._nominalhistname   = nominal_hist_key
+        if not categoryname is None:
+            self._categoryname      = categoryname
+        
+        if self._calculate_yield:
+            self._eventcount        = self.calculate_yield()
+        if not systematic_hist_key is None:
+            self._systkey = systematic_hist_key
         if self._debug:
             print "initialized process with name '%s' in category '%s'" % (self._name, self._categoryname)
         
@@ -37,7 +55,7 @@ class processObject(object):
         if path.exists(self._rootfile):
             infile = TFile(self._rootfile)
             #check if root file is intact
-            if infile.IsOpen() and not infile.IsZombie() and not infile.TestBit(TFile.kRecovered):
+            if self.helper.intact_root_file(infile):
                 #if yes, try to load histogram
                 
                 hist = infile.Get(self._nominalhistname)
@@ -137,15 +155,12 @@ class processObject(object):
 
     @nominalhistname.setter
     def nominalhistname(self, hname):
-        if path.exists(self._rootfile):
-            f = TFile(self._rootfile)
-            h = f.Get(hname)
-            if isinstance(h, TH1):
-                self._nominalhistname = hname
-            else:
-                print "'%s' does not exist in '%s'" % (hname, self._rootfile)
+        
+        if self.helper.histogram_exists(file = self._rootfile,
+                                        histname = hname):
+            self._nominalhistname = hname
         else:
-            print "'%s' does not exist! You should check it again" % self._rootfile
+            print "'%s' does not exist in '%s'" % (hname, self._rootfile)
 
     def __str__(self):
         """
@@ -161,40 +176,78 @@ class processObject(object):
         s.append("\trootfile:\t%s" % self._rootfile)
         s.append("\tnominal histname:\t%s" % self._nominalhistname)
         s.append("\tyield:\t{0}".format(self._eventcount))
-        if len(self._uncertainties) != 0: s.append("\t\tuncertainty\tcorrelation")
+        if len(self._uncertainties) != 0:
+            s.append("\tlist of uncertainties:")
+
+            temp = "\t\t%s" %  "uncertainty".ljust(15)
+            temp += "\t%s" % "type".ljust(10)
+            temp += "\t%s" % "correlation".ljust(15)
+            s.append(temp)
+            s.append("\t\t"+"_"*len(temp.expandtabs()))
         for syst in self._uncertainties:
-            s.append("\t\t%s\t%s" % (syst, self._uncertainties[syst]))
-        return "\n".join(s)
+            temp = "\t\t%s" % syst.ljust(15)
+            temp += "\t%s" % self._uncertainties[syst]["type"].ljust(10)
+            temp += "\t%s" % str(self._uncertainties[syst]["value"]).ljust(15)
+            s.append(temp)
+        return "\n".join(s)     
 
-    def is_good_systval(self, value):
-        """
-        check if 'value' is a format allowed for systematic uncertainties
-        """
-        is_good = False
-        if value == "-": is_good = True
-        elif isinstance(value,float) or isinstance(value,int): is_good = True
-        elif isinstance(value,str):
-            totest = value.split("/")
-            if len(totest) in [1,2]:
-                is_good = all(helper.isfloat(v) for v in totest)
-        if not is_good: print "The given value is not suitable for an uncertainty in a datacard!"
-        return is_good
-
-    def add_uncertainty(self, systname, typ, value):
+    def add_uncertainty(self, syst, typ, value):
         """
         add an uncertainty to this process. This function checks
         - whether there already is an entry for 'systname'
         - the given value is suitable for a datacard (see 'is_good_systval')
         and only adds the systematics if it's new and has a good value
         """
-        if not systname in self._uncertainties and self.is_good_systval(value):
-                self._uncertainties[systname] = {"value" : str(value), "type" : typ}
+        
+        if isinstance(syst, str) and isinstance(typ, str):
+            if not syst in self._uncertainties:
+                if typ == "shape":
+                    print "Looking for varied histograms for systematic"
+                    # if self.helper.histogram_exists(self._rootfile, 
+                    #                     self._systkey.replace(self._sy))
+                if self.helper.is_good_systval(value):
+                    self._uncertainties[syst] = {}
+                    self._uncertainties[syst]["type"] = typ
+                    self._uncertainties[syst]["value"] = value
+                    return True
+            else:
+                temp = "There is already an entry for uncertainty " 
+                temp += "%s in process %s" % (systname, self.get_name())
+                print temp
         else:
-            print "There is already an entry for uncertainty %s in process %s" % (systname, self.get_name())
+            print "ERROR: Could not add uncertainty - input arguments invalid!"
+        return False
+
+    # def add_uncertainty_from_systematicObject(self, systematic, value = None):
+    #     """
+    #     add an uncertainty to this process. This function checks
+    #     - whether there already is an entry for 'systname'
+    #     - the given value is suitable for a datacard (see 'is_good_systval')
+    #     and only adds the systematics if it's new and has a good value
+    #     """
+    #     if isinstance(systematic, systematicObject):
+    #         if not sysname in self._uncertainties:
+    #             if systematic.is_good_systval(value):
+    #                 cor = systematic.set_correlation(process = self)
+    #                 if cor == "-":
+    #                     systematic.add_process( process = self, 
+    #                                             correlation = value)
+    #                 else:
+    #                     systematic.set_correlation( process = self, 
+    #                                                 value = value)
+    #             self._uncertainties[sysname] = systematic
+
+    #         else:
+    #             temp = "There is already an entry for uncertainty " 
+    #             temp += "%s in process %s" % (systname, self.get_name())
+    #             print temp
+    #     else:
+    #         print "ERROR: systematic needs to be a systematicObject!"
 
     def set_uncertainty(self, systname, typ, value):
         """
-        set the uncertainty 'systname' for this process to type 'typ' and value 'value'. This function checks
+        set the uncertainty 'systname' for this process to type 'typ' 
+        and value 'value'. This function checks
         - whether there is an entry for 'systname' in the first place
         - the given value is suitable for a datacard (see 'is_good_systval')
         and only adds the systematics if there is an entry and the value is good
@@ -211,7 +264,7 @@ class processObject(object):
         If there is no entry for 'systname' in this process, the function returns '-'
         """
         if systname in self._uncertainties:
-            return self._uncertainties[systname]
+            return self._uncertainties[systname]["value"]
         else:
             return "-"
 
@@ -221,6 +274,15 @@ class processObject(object):
         If there is no entry for 'systname' in this process, the function returns ''
         """
         if systname in self._uncertainties:
-            return self._uncertainties[systname]
+            return self._uncertainties[systname]["type"]
         else:
             return ""
+
+    # def get_uncertainty(self, systname):
+    #     """
+    #     return systematicObject if there is one 
+    #     """
+    #     if systname in self._uncertainties:
+    #         return self._uncertainties[systname]
+    #     else:
+    #         return None
