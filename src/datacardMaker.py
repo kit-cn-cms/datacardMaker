@@ -90,6 +90,8 @@ class datacardMaker(object):
             with open(pathToDatacard) as datacard:
                 lines = datacard.read().splitlines()
                 self._shapelines_ = []
+                self._processes_= []
+                self._binprocesses_= []
                 for n, line in enumerate(lines):
                     if line.startswith("-"):
                             continue
@@ -101,9 +103,13 @@ class datacardMaker(object):
                     elif line.startswith("shapes"):
                         self._shapelines_.append(line)
                     elif line.startswith("process") and n != 0 and lines[n-1].startswith("bin"):
-                        pass
+                        self._processes_.append(line)
+                        self._binprocesses_.append(line)
+                        
                     else:
                         pass
+                
+                
                         
                         
         else:

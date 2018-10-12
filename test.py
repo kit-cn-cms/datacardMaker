@@ -59,7 +59,7 @@ class test:
                 self._categories_[category]["shapes"]={}
                 self._category_.append(category)
                 
-            print self._systematics_
+            
              
             processes = self._processes_.split()
             processes.pop(0)
@@ -69,6 +69,7 @@ class test:
                 for process,binprocess in zip(processes, binprocesses):
                     self._categories_[binprocess][process]={}
                     self._categories_[binprocess][process]["shapes"]={}
+                    self._categories_[binprocess][process]["systematics"]={}
                     self._process_[binprocess].append(process)
                     
             
@@ -91,12 +92,25 @@ class test:
         
 
             
+            for systematics in self._systematics_:
+                 systematic = systematics.split()
+                 sys=systematic[0]
+                 typ=systematic[1]
+                 print sys
+                 print typ
+                 systematic.pop(1)
+                 systematic.pop(0)
+                 for value,process,category in zip(systematic,processes,binprocesses):
+                     if value!="-":
+                        self._categories_[category][process]["systematics"][sys]={}
+                        self._categories_[category][process]["systematics"][sys]["type"]=typ
+                        self._categories_[category][process]["systematics"][sys]["value"]=value
     
                         
 s = test("testdatacard.txt")
 s.load_from_file("testdatacard.txt")
 print s._categories_
-#print s._categories_["ljets_j5_tge4_DeepCSV"]["shapes"]["rootfile"]
+print s._categories_["ljets_j5_tge4_DeepCSV"]["ttbarPlus2B"]
 
 
 
