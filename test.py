@@ -17,11 +17,13 @@ class test:
         self._category = []
         self._bin = ""
         
+        
     def load_from_file(self, pathToDatacard):
             print "loading datacard from", pathToDatacard
             with open(pathToDatacard) as datacard:
                 lines = datacard.read().splitlines()
                 self._shapelines_ = []
+                self._systematics_ = []
                 self._processes_= ""
                 self._binprocesses_= ""
                 for n, line in enumerate(lines):
@@ -36,19 +38,29 @@ class test:
                         self._shapelines_.append(line)
                     elif line.startswith("process") and n != 0 and lines[n-1].startswith("bin"):
                         self._processes_=line
-                        self._binprocesses_=lines[n-1]                        
-                    else:
+                        self._binprocesses_=lines[n-1]  
+                    elif line.startswith("bin") and lines[n+1].startswith("process"):
                         pass
+                    elif line.startswith("process") and lines[n+1].startswith("rate"):
+                        pass
+                    elif line.startswith("observation") or line.startswith("rate"):
+                        pass
+                    else:
+                        self._systematics_.append(line)
                     
             self._categories_ = {}
             self._category_ = []
+            self._process_ = {}  
             bins = self._bins.split()
             bins.pop(0)
             for category in bins:
                 self._categories_[category] = {}
+                self._process_[category]=[]
+                self._categories_[category]["shapes"]={}
                 self._category_.append(category)
-            
-            self._process_ = {}    
+                
+            print self._systematics_
+             
             processes = self._processes_.split()
             processes.pop(0)
             binprocesses = self._binprocesses_.split()
@@ -56,30 +68,29 @@ class test:
             if len(processes)==len(binprocesses):
                 for process,binprocess in zip(processes, binprocesses):
                     self._categories_[binprocess][process]={}
-                    self._process_[binprocess]=[]
+                    self._categories_[binprocess][process]["shapes"]={}
                     self._process_[binprocess].append(process)
-            print self._process_
-            print self._category_
+                    
+            
             for shapelines in self._shapelines_:
                 shape = shapelines.split()
                 for category in self._category_:
-                        self._categories_[category]["shapes"]={}
                         if shape[2] == category or shape[2]=="*":
-                            for process in self._process_[category]:
-                                if shape[1] == "*":
-                                    print shape[3]
+                            if shape[1] == "*":
                                     self._categories_[category]["shapes"]["default"]={}
                                     self._categories_[category]["shapes"]["default"]["rootfile"]=shape[3]
                                     self._categories_[category]["shapes"]["default"]["hist"]=shape[4]
                                     self._categories_[category]["shapes"]["default"]["systhist"]=shape[5]
-                                #elif shape[1] == process
-                                #self._categories_[category][shapes][process]={}
-                                #self._categories_[category][shapes][process][rootfile]=shape[3]
-                                #self._categories_[category][shapes][process][hist]=shape[4]
-                                #self._categories_[category][shapes][process][systhist]=shape[5]
+                                    
+                            for process in self._process_[category]:
+                                if shape[1] == process:
+                                    self._categories_[category][process]["shapes"]={}
+                                    self._categories_[category][process]["shapes"]["rootfile"]=shape[3]
+                                    self._categories_[category][process]["shapes"]["hist"]=shape[4]
+                                    self._categories_[category][process]["shapes"]["systhist"]=shape[5]
         
 
-    
+            
     
                         
 s = test("testdatacard.txt")
