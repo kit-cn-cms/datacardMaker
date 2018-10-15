@@ -6,12 +6,13 @@ basedir = path.join(thisdir, "../base")
 if not basedir in spath:
     spath.append(basedir)
 from helperClass import helperClass
-
-
-
+from identificationLogic import identificationLogic
+from valueConventions import valueConventions
 
 class processObject(object):
     helper = helperClass()
+    id_logic = identificationLogic()
+    value_rules = valueConventions()
     helper._debug = 99
     
     def init_variables(self):
@@ -44,7 +45,9 @@ class processObject(object):
         if not systematic_hist_key is None:
             self._systkey = systematic_hist_key
         if self._debug:
-            print "initialized process with name '%s' in category '%s'" % (self._name, self._categoryname)
+            s = "initialized process with name '%s'" % self._name
+            s += "in category '%s'" % self._categoryname
+            print s
         
     def calculate_yield(self):
         """
@@ -52,6 +55,8 @@ class processObject(object):
         """
         #open rootfile if it exsists
         y = -1
+
+        #TODO: export file logic to dedicated class
         if path.exists(self._rootfile):
             infile = TFile(self._rootfile)
             #check if root file is intact
@@ -63,10 +68,14 @@ class processObject(object):
                     #if successful, save yield
                     y = hist.Integral()
                 else:
-                    print "ERROR:\tunable to load histogram! I will let combine calculate it on the fly, but it could crash"
+                    s = "ERROR:\tunable to load histogram!"
+                    s += " I will let combine calculate it on the fly,"
+                    s += " but it could crash"
                 infile.Close()
             else:
-                print "ERROR:\tunable to open root file for process {0}, cannot set yield".format(self._name)
+                s = "ERROR:\tunable to open root file for"
+                s += " process %s" % self._name
+                print s
         else:
             print "ERROR:\troot file does not exist! Cannot set yield for process {0}".format(self._name)
         return y
@@ -195,7 +204,8 @@ class processObject(object):
         """
         add an uncertainty to this process. This function checks
         - whether there already is an entry for 'systname'
-        - the given value is suitable for a datacard (see 'is_good_systval')
+        - the given value is suitable for a datacard 
+            (see valueConventions.is_good_systval)
         and only adds the systematics if it's new and has a good value
         """
         
@@ -205,11 +215,13 @@ class processObject(object):
                     print "Looking for varied histograms for systematic"
                     # if self.helper.histogram_exists(self._rootfile, 
                     #                     self._systkey.replace(self._sy))
-                if self.helper.is_good_systval(value):
+                if self.value_rules.is_good_systval(value):
                     self._uncertainties[syst] = {}
                     self._uncertainties[syst]["type"] = typ
                     self._uncertainties[syst]["value"] = value
                     return True
+                else:
+                    print "Value {0} is not a good value!".format(value)
             else:
                 temp = "There is already an entry for uncertainty " 
                 temp += "%s in process %s" % (systname, self.get_name())
@@ -252,16 +264,20 @@ class processObject(object):
         - the given value is suitable for a datacard (see 'is_good_systval')
         and only adds the systematics if there is an entry and the value is good
         """
-        if systname in self._uncertainties and self.is_good_systval(value):
-            self._uncertainties[systname]["value"] = str(value)
-            self._uncertainties[systname]["type"] = typ
+        if systname in self._uncertainties:
+            if self.value_rules.is_good_systval(value):
+                self._uncertainties[systname]["value"] = str(value)
+                self._uncertainties[systname]["type"] = typ
         else:
-            print "There is no entry for uncertainty %s in process %s" % (systname, self.get_name())
+            s = "There is no entry for uncertainty %s" % systname
+            s += " in process %s! Please add it first" % self.get_name()
+            print s
 
     def get_uncertainty_value(self, systname):
         """
         return correlation of uncertainty 'systname' with this process.
-        If there is no entry for 'systname' in this process, the function returns '-'
+        If there is no entry for 'systname' in this process, the function 
+        returns '-'
         """
         if systname in self._uncertainties:
             return self._uncertainties[systname]["value"]
@@ -271,7 +287,8 @@ class processObject(object):
     def get_uncertainty_type(self, systname):
         """
         return type of uncertainty 'systname' in this process.
-        If there is no entry for 'systname' in this process, the function returns ''
+        If there is no entry for 'systname' in this process, the function 
+        returns ''
         """
         if systname in self._uncertainties:
             return self._uncertainties[systname]["type"]
