@@ -8,11 +8,13 @@ if not basedir in spath:
 from helperClass import helperClass
 from identificationLogic import identificationLogic
 from valueConventions import valueConventions
+from fileHandler import fileHandler
 
 class processObject(object):
     helper = helperClass()
     id_logic = identificationLogic()
     value_rules = valueConventions()
+    file_handler = fileHandler()
     helper._debug = 99
     
     def init_variables(self):
@@ -57,27 +59,10 @@ class processObject(object):
         y = -1
 
         #TODO: export file logic to dedicated class
-        if path.exists(self._rootfile):
-            infile = TFile(self._rootfile)
-            #check if root file is intact
-            if self.helper.intact_root_file(infile):
-                #if yes, try to load histogram
-                
-                hist = infile.Get(self._nominalhistname)
-                if isinstance(hist, TH1):
-                    #if successful, save yield
-                    y = hist.Integral()
-                else:
-                    s = "ERROR:\tunable to load histogram!"
-                    s += " I will let combine calculate it on the fly,"
-                    s += " but it could crash"
-                infile.Close()
-            else:
-                s = "ERROR:\tunable to open root file for"
-                s += " process %s" % self._name
-                print s
-        else:
-            print "ERROR:\troot file does not exist! Cannot set yield for process {0}".format(self._name)
+        temp = file_handler.get_integral(file = self._rootfile, 
+                                    histname = self._nominalhistname)
+        if temp:
+            y = temp 
         return y
     #getter/setter for yields
     @property
@@ -165,7 +150,7 @@ class processObject(object):
     @nominalhistname.setter
     def nominalhistname(self, hname):
         
-        if self.helper.histogram_exists(file = self._rootfile,
+        if self.file_handler.histogram_exists(file = self._rootfile,
                                         histname = hname):
             self._nominalhistname = hname
         else:
@@ -213,7 +198,7 @@ class processObject(object):
             if not syst in self._uncertainties:
                 if typ == "shape":
                     print "Looking for varied histograms for systematic"
-                    # if self.helper.histogram_exists(self._rootfile, 
+                    # if self.file_handler.histogram_exists(self._rootfile, 
                     #                     self._systkey.replace(self._sy))
                 if self.value_rules.is_good_systval(value):
                     self._uncertainties[syst] = {}
