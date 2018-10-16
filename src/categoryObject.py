@@ -144,7 +144,7 @@ class categoryObject(object):
     def systname(self):
         return self._systkey
             
-    @shistname.setter
+    @systname.setter
     def systname(self, hname):
         
         if self.file_handler.histogram_exists(file = self._rootfile,
