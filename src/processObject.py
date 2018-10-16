@@ -1,4 +1,3 @@
-# from ROOT import TFile, TH1
 from os import path
 from sys import path as spath
 thisdir = path.realpath(path.dirname(__file__))
@@ -6,16 +5,16 @@ basedir = path.join(thisdir, "../base")
 if not basedir in spath:
     spath.append(basedir)
 from helperClass import helperClass
-from identificationLogic import identificationLogic
+# from identificationLogic import identificationLogic
 from valueConventions import valueConventions
 from fileHandler import fileHandler
 
 class processObject(object):
-    helper = helperClass()
-    id_logic = identificationLogic()
-    value_rules = valueConventions()
-    file_handler = fileHandler()
-    helper._debug = 99
+    _helper = helperClass()
+    # _id_logic = identificationLogic()
+    _value_rules = valueConventions()
+    _file_handler = fileHandler()
+    _helper._debug = 99
     
     def init_variables(self):
         self._name = ""
@@ -48,22 +47,20 @@ class processObject(object):
             self._systkey = systematic_hist_key
         if self._debug:
             s = "initialized process with name '%s'" % self._name
-            s += "in category '%s'" % self._categoryname
+            s += " in category '%s'" % self._categoryname
             print s
         
     def calculate_yield(self):
         """
         returns yield (TH1D::Integral() ) for this process
         """
-        #open rootfile if it exsists
         y = -1
 
-        #TODO: export file logic to dedicated class
-        temp = file_handler.get_integral(file = self._rootfile, 
-                                    histname = self._nominalhistname)
+        temp = _file_handler.get_integral(histname = self._nominalhistname)
         if temp:
             y = temp 
         return y
+
     #getter/setter for yields
     @property
     def eventcount(self):
@@ -83,6 +80,8 @@ class processObject(object):
         get yield for process
         """
         y = self._eventcount
+        if self._debug >= 99:
+            print "returning yield of", y
         return y
 
     #logic for process name
@@ -91,7 +90,8 @@ class processObject(object):
         return self.get_name()
     @name.setter
     def name(self, s):
-        if self._debug: print "entered setter for name"
+        if self._debug >= 99: 
+            print "entered setter for name"
         self.set_name(s)
 
     
@@ -99,7 +99,8 @@ class processObject(object):
         """
         set process name
         """
-        if self._debug: print "setting name to", name
+        if self._debug >= 20: 
+            print "setting name to", name
         self._name = name
         
     def get_name(self):
@@ -115,7 +116,8 @@ class processObject(object):
 
     @category.setter
     def category(self, catname):
-        if self._debug: print "entered setter for category"
+        if self._debug >= 99: 
+            print "entered setter for category"
         self.set_category(catname)
         # self._categoryname = catname
     
@@ -129,17 +131,20 @@ class processObject(object):
         """
         set name for category to which this process belongs to
         """
-        if self._debug: print "setting category to", catname
+        if self._debug >= 20: 
+            print "setting category to", catname
         self._categoryname = catname
 
     @property
-    def rootfile(self):
-        return self._rootfile
+    def file(self):
+        return self._file_handler.filepath
     
-    @rootfile.setter
-    def rootfile(self, rootpath):
+    @file.setter
+    def file(self, rootpath):
+        if self._debug >= 20:
+            print "setting filepath to", rootpath
         if path.exists(rootpath):
-            self._rootfile = rootpath
+            self._file_handler.filepath = rootpath
         else:
             print "file '%s' does not exist!" % rootpath
 
@@ -150,11 +155,12 @@ class processObject(object):
     @nominalhistname.setter
     def nominalhistname(self, hname):
         
-        if self.file_handler.histogram_exists(file = self._rootfile,
-                                        histname = hname):
+        if self._file_handler.histogram_exists(histname = hname):
             self._nominalhistname = hname
+            if self.
         else:
-            print "'%s' does not exist in '%s'" % (hname, self._rootfile)
+            s = "'%s' does not exist " % hname
+            s += "in '%s'" % self._file_handler.filepath
 
     def __str__(self):
         """
@@ -198,9 +204,9 @@ class processObject(object):
             if not syst in self._uncertainties:
                 if typ == "shape":
                     print "Looking for varied histograms for systematic"
-                    # if self.file_handler.histogram_exists(self._rootfile, 
+                    # if self._file_handler.histogram_exists(self._rootfile, 
                     #                     self._systkey.replace(self._sy))
-                if self.value_rules.is_good_systval(value):
+                if self._value_rules.is_good_systval(value):
                     self._uncertainties[syst] = {}
                     self._uncertainties[syst]["type"] = typ
                     self._uncertainties[syst]["value"] = value
@@ -213,7 +219,9 @@ class processObject(object):
                 temp += "Please use 'set_uncertainty' instead."
                 print temp
         else:
-            print "ERROR: Could not add uncertainty - input arguments invalid!"
+            s = "ERROR: Could not add uncertainty - "
+            s += "both name and type of systematic are required to be strings!"
+            print s
         return False
 
     # def add_uncertainty_from_systematicObject(self, systematic, value = None):
@@ -251,7 +259,7 @@ class processObject(object):
         and only adds the systematics if there is an entry and the value is good
         """
         if systname in self._uncertainties:
-            if self.value_rules.is_good_systval(value):
+            if self._value_rules.is_good_systval(value):
                 self._uncertainties[systname]["value"] = str(value)
                 self._uncertainties[systname]["type"] = typ
         else:

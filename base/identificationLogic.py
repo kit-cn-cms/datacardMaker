@@ -22,6 +22,7 @@ class identificationLogic(object):
                                      , e.g. $SYSTEMATIC
                                      (member variable: _systIden)
     """
+    _debug = 99
     def init_variables(self):
         """
         define member variables here
@@ -63,12 +64,12 @@ class identificationLogic(object):
         return self._generic_nom_key
     @generic_nominal_key.setter
     def generic_nominal_key(self, key):
-        if not self._procIden in key:
+        if not self._procIden in key and self._debug >= 3:
             s = "WARNING: process identification keyword '%s'" % self._procIden
             s+= " is not part of new nominal key '%s'!" % key
             print s
-        if not self._chIden in key:
-            s = "WARNING: channel identification keyword '%s'" % self._procIden
+        if not self._chIden in key and self._debug >= 3:
+            s = "WARNING: channel identification keyword '%s'" % self._chIden
             s+= " is not part of new nominal key '%s'!" % key
             print s
         self._generic_nom_key = key
@@ -213,3 +214,41 @@ class identificationLogic(object):
                                             systematic_name = systematic_name, 
                                             base_key = base_key)
         return [up, down]
+
+    def matches_generic_nominal_key(self, tocheck, process_name, 
+                                    channel_name = None):
+        """
+        Check whether given nominal histogram name 'tocheck' is compatible
+        with the generic nominal key
+        """
+        temp = tocheck
+        if not channel_name is None:
+            if channel_name in temp:
+                temp = temp.replace(channel_name, self._chIden)
+        if process_name in temp:
+            temp = temp.replace(process_name, self._procIden)
+        if temp == self._generic_nom_key:
+            return True
+        return False
+
+    def matches_generic_systematic_key( self, tocheck, process_name, 
+                                        channel_name = None, 
+                                        systematic_name = None):
+        """
+        Check whether given systematic histogram name 'tocheck' is compatible
+        with the generic systematic key
+        """
+        temp = tocheck
+        if not channel_name is None and not channel_name == "":
+            if channel_name in temp and not self._chIden in temp:
+                temp = temp.replace(channel_name, self._chIden)
+        if process_name in temp and not process_name == "":
+            if not self._procIden in temp:
+                temp = temp.replace(process_name, self._procIden)
+        if systematic_name in temp and not systematic_name == "":
+            if not self._systIden in temp:
+                temp = temp.replace(systematic_name, self._systIden)
+
+        if temp == self._generic_syst_key:
+            return True
+        return False

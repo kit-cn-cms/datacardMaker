@@ -23,27 +23,34 @@ class fileHandler(object):
         self.close_file()
 
     def is_file_open(self):
-        if isinstance(self._file, TFile):
+        if self._debug >= 99:
+            print "DEBUG: checking for open file"
+        if not self._file is None and isinstance(self._file, TFile):
             return self._file.IsOpen()
+        if self._debug >= 99:
+            print "DEBUG: file is not a TFile!"
         return False
 
     def close_file(self):
-        if self.is_file_open:
+        if self._debug >= 99:
+            print "DEBUG: Closing file if it's open"
+        if self.is_file_open():
             self._file.Close()
 
     def open_file(self, path):
         if self._debug >= 99:
-            print "opening file '%s'" % filepath
-        if opath.exists(filepath):
-            f = TFile.Open(filepath)
-            if self.intact_root_file(f):
+            print "opening file '%s'" % path
+        if opath.exists(path):
+            f = TFile.Open(path)
+            if self.is_intact_file(f):
                 self._file = f
+                self._filepath = path
             else:
                 if self._debug >= 3:
-                    print "Could not open file '%s'" % filepath
+                    print "Could not open file '%s'" % path
         else:
             if self._debug >= 3:
-                print "File '%s' does not exist!" % filepath
+                print "File '%s' does not exist!" % path
         return None
 
     @property
@@ -51,11 +58,13 @@ class fileHandler(object):
         return self._filepath
     @filepath.setter
     def filepath(self, path):
-        if opath.exists(path):
-            self.close_file()
-            self.open_file(path)
+        if self._debug >= 20:
+            print "trying to set file path to", path
 
-    def intact_root_file(self, f):
+        self.close_file()
+        self.open_file(path)
+
+    def is_intact_file(self, f):
 
         if f and isinstance(f, TFile):
             if f.IsOpen():
@@ -73,7 +82,9 @@ class fileHandler(object):
                     print "ERROR: file '%s' is not open" % f.GetName()
         return False     
 
-    def load_histogram(self, file, histname):
+    def load_histogram(self, histname):
+        if self._debug >= 99:
+            print "DEBUG: entering 'fileHandler.load_histogram'"
         if self._file:
             if self._debug >= 10:
                 print "DEBUG: loading histogram '%s' from '%s'" % (histname, file)
@@ -85,14 +96,16 @@ class fileHandler(object):
                         % (histname, file))
         return None
 
-    def histogram_exists(self, file, histname):
-        h = self.load_histogram(file = file, histname = histname)
+    def histogram_exists(self, histname):
+        h = self.load_histogram(histname = histname)
+        if self._debug >= 99:
+            print "found histogram at", h
         if h:
             return True
         return False
     
-    def get_integral(self, file, histname):
-        h = self.load_histogram(file = file, histname = histname)
+    def get_integral(self, histname):
+        h = self.load_histogram(histname = histname)
         if h:
             return h.Integral()
         else:

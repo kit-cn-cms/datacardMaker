@@ -15,15 +15,14 @@ class categoryObject(object):
         self._signalprocs = {}
         self._bkgprocs    = {}
         self._key_creator = identificationLogic()
+        self._default_root_file = None
     
     def __init__(   self, categoryName=None, defaultRootFile=None, 
                     defaultnominalkey=None,
                     systkey = None, 
                     dict_of_signals = None, 
                     dict_of_bkgs = None, 
-                    processIdentifier = None,
-                    channelIdentifier = None,
-                    systIdentifier = None ):
+                    ):
         """
         init category. A category has a name, a root file containing
         the process histograms and a key to find the nominal histograms
@@ -39,28 +38,18 @@ class categoryObject(object):
         defaultnominalkey   --  key to find the nominal histograms
         systkey             --  key to find the histograms corresponding to 
                                 a nuisance parameter shape variation
-        processIdentifier   --  string that is to be replaced with the 
-                                process name in the keys
-        channelIdentifier   --  string that is to be replaced with the 
-                                channel name in the keys
-        systIdentifier      --  string that is to be replaced with the 
-                                nuisance parameter name in the keys
         """
         self.init_variables()
         if not categoryName is None:
             self._name     = categoryName
-        if not defaultRootFile is None:
-            self._nomkey   = defaultnominalkey
-        if not systkey is None:
-            self._systkey  = systkey
-        if not processIdentifier is None:
-            self._procIden = processIdentifier
-        if not channelIdentifier is None:
-            self._chIden   = channelIdentifier
-        if not systIdentifier is None:
-            self._systIden = systIdentifier
         if not defaultnominalkey is None:
-            self._nomkey = defaultnominalkey
+            self._key_creator.generic_nominal_key = defaultnominalkey
+        if not systkey is None:
+            self._key_creator.generic_systematics_key = systkey
+        if not defaultRootFile is None:
+            if path.exists(defaultRootFile):
+                self._default_root_file = defaultRootFile
+
         
 
         # #check if process/channel identifiers are in nominal histo key
@@ -87,19 +76,19 @@ class categoryObject(object):
             for proc in dict_of_bkgs:
                 self.add_background_process(name = proc,
                                         rootfile = defaultRootFile)
-    def is_part_of(self, identifier, key):
-        if identifier in key:
-            if self._debug:
-                s = "Identifier '%s' is part of " % identifier
-                s += "keyword '%s'" % key
-                print s
-            return True
-        else:
-            if self._debug:
-                s = "Identifier '%s' is not part of " % identifier
-                s += "keyword '%s'" % key
-                print s
-            return False
+    # def is_part_of(self, identifier, key):
+    #     if identifier in key:
+    #         if self._debug:
+    #             s = "Identifier '%s' is part of " % identifier
+    #             s += "keyword '%s'" % key
+    #             print s
+    #         return True
+    #     else:
+    #         if self._debug:
+    #             s = "Identifier '%s' is not part of " % identifier
+    #             s += "keyword '%s'" % key
+    #             print s
+    #         return False
 
     @property
     def n_signal_procs(self):
@@ -115,27 +104,57 @@ class categoryObject(object):
     @name.setter
     def name(self, val):
         self._name = val
+
+    @property
+    def signal_processes(self):
+        return self._signalprocs
+
+    @property
+    def background_processes(self):
+        return self._bkgprocs
     
-        
+    @property
+    def generic_key_nominal_hist(self):
+        return self._key_creator.generic_nominal_key
+    @generic_key_nominal_hist.setter
+    def generic_key_nominal_hist(self, key):
+        channelkey = self._key_creator.insert_channel(channel_name = self._name, 
+                                                        base_key = key)
+        self._key_creator.generic_nominal_key = channelkey
+
+    @property
+    def generic_key_systematic_hist(self):
+        return self._key_creator.generic_systematics_key
+    @generic_key_systematic_hist.setter
+    def generic_key_systematic_hist(self, key):
+        channelkey = self._key_creator.insert_channel(channel_name = self._name, 
+                                                        base_key = key)
+        self._key_creator.generic_systematics_key = channelkey
     
-    def add_signal_process( self, name, rootfile, 
-                            histoname = None, 
+
+
+    
+
+    def add_signal_process( self, name, rootfile = None, histoname = None, 
                             systkey = None):
         """
         add a signal process. Calls function add_process with 
         list of signal processes
         """
         if histoname is None:
-            histoname = self._nomkey
+            histoname = self._key_creator.insert_process(process_name = name,
+                            base_key = self._key_creator.generic_nominal_key)
         if systkey is None:
-            systkey = self._systkey
-        self.add_process(   dic = self._signalprocs, name = name,
+            systkey = self._key_creator.insert_process(process_name = name,
+                        base_key = self._key_creator.generic_systematics_key)
+        if rootfile is None:
+            rootfile = self._default_root_file
+        self.add_process_raw(   dic = self._signalprocs, name = name,
                             rootfile = rootfile, histoname = histoname,
                             systkey = systkey)      
     
-    def add_background_process( self, name, rootfile, 
-                                histoname = None, 
-                                systkey = None):
+    def add_background_process( self, name, rootfile = None, 
+                                histoname = None, systkey = None):
         """
         add a background process. Calls function add_process with 
         list of background processes
@@ -144,7 +163,7 @@ class categoryObject(object):
             histoname = self._nomkey
         if systkey is None:
             systkey = self._systkey                            
-        self.add_process(   dic = self._bkgprocs, name = name,
+        self.add_process_raw(   dic = self._bkgprocs, name = name,
                             rootfile = rootfile, histoname = histoname,
                             systkey = systkey)
                             
@@ -198,6 +217,12 @@ class categoryObject(object):
             dic[process.name] = process
         else:
             print "ERROR: Category can only contain processes!"
+
+    def add_process_raw(self, dic, name, rootfile, histoname, systkey):
+        temp = processObject(processName = name, pathToRootfile = rootfile, 
+                    nominal_hist_key = histoname, systematic_hist_key = systkey, 
+                    categoryname = self._name)
+        self.add_process(dic = dic, process = temp)
 
     def __str__(self):
         s = []

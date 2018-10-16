@@ -21,7 +21,8 @@ def datacard_tests():
 	
 	testproc.name = "nominal"
 	testproc.category = "jge6_tge4"
-	testproc.rootfile = "test.root"
+	print "setting rootfile"
+	testproc.file = "test.root"
 	testproc.nominalhistname = "nominal"
 	testproc.systname = "nominal_$SYSTEMATIC"
 	testproc.add_uncertainty("lumi", "lnN", "1.025")
