@@ -206,10 +206,11 @@ class processObject(object):
                     self._uncertainties[syst]["value"] = value
                     return True
                 else:
-                    print "Value {0} is not a good value!".format(value)
+                    print "Value '{0}' is not a good value!".format(value)
             else:
                 temp = "There is already an entry for uncertainty " 
-                temp += "%s in process %s" % (systname, self.get_name())
+                temp += "'%s' in process '%s'! " % (syst, self.get_name())
+                temp += "Please use 'set_uncertainty' instead."
                 print temp
         else:
             print "ERROR: Could not add uncertainty - input arguments invalid!"

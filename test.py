@@ -28,8 +28,9 @@ def datacard_tests():
 	testproc.add_uncertainty("pdf_gg", "lnN", "0.98/1.02")
 	testproc.add_uncertainty(syst = "JES", typ = "shape", value = 1.0)
 	#not working yet
-	# testproc.add_uncertainty(syst = 5, typ = "shape", value = 1.0)
-	# testproc.add_uncertainty(syst = "JES", typ = "shape", value = "five")
+	testproc.add_uncertainty(syst = 5, typ = "shape", value = 1.0)
+	testproc.add_uncertainty(syst = "JES", typ = "shape", value = "five")
+	testproc.add_uncertainty(syst = "JES2", typ = "shape", value = "five")
 	print testproc
 
 	category = categoryObject()
