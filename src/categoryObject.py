@@ -15,7 +15,7 @@ class categoryObject(object):
         self._signalprocs = {}
         self._bkgprocs    = {}
         self._key_creator = identificationLogic()
-        self._default_root_file = None
+        self._default_file = None
     
     def __init__(   self, categoryName=None, defaultRootFile=None, 
                     defaultnominalkey=None,
@@ -48,7 +48,7 @@ class categoryObject(object):
             self._key_creator.generic_systematics_key = systkey
         if not defaultRootFile is None:
             if path.exists(defaultRootFile):
-                self._default_root_file = defaultRootFile
+                self._default_file = defaultRootFile
 
         
 
@@ -131,6 +131,16 @@ class categoryObject(object):
                                                         base_key = key)
         self._key_creator.generic_systematics_key = channelkey
     
+    @property
+    def default_file(self):
+        return self._default_file
+    @default_file.setter
+    def default_file(self, path):
+        if path.exists(path):
+            self._default_file = path
+        else:
+            print "ERROR: File '%s' does not exist!" % path
+    
 
 
     
@@ -148,7 +158,7 @@ class categoryObject(object):
             systkey = self._key_creator.insert_process(process_name = name,
                         base_key = self._key_creator.generic_systematics_key)
         if rootfile is None:
-            rootfile = self._default_root_file
+            rootfile = self._default_file
         self.add_process_raw(   dic = self._signalprocs, name = name,
                             rootfile = rootfile, histoname = histoname,
                             systkey = systkey)      

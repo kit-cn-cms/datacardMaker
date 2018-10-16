@@ -5,13 +5,14 @@ basedir = path.join(thisdir, "../base")
 if not basedir in spath:
     spath.append(basedir)
 from helperClass import helperClass
-# from identificationLogic import identificationLogic
+from identificationLogic import identificationLogic
 from valueConventions import valueConventions
 from fileHandler import fileHandler
 
 class processObject(object):
     _helper = helperClass()
-    # _id_logic = identificationLogic()
+    _id_logic = identificationLogic()
+    identificationLogic.belongs_to = "process"
     _value_rules = valueConventions()
     _file_handler = fileHandler()
     _helper._debug = 99
@@ -149,18 +150,29 @@ class processObject(object):
             print "file '%s' does not exist!" % rootpath
 
     @property
-    def nominalhistname(self):
+    def nominal_hist_name(self):
         return self._nominalhistname
 
-    @nominalhistname.setter
-    def nominalhistname(self, hname):
+    @nominal_hist_name.setter
+    def nominal_hist_name(self, hname):
         
         if self._file_handler.histogram_exists(histname = hname):
-            self._nominalhistname = hname
-            if self.
+            #following if statement should be redundand
+            if self._id_logic.is_allowed_key(hname): 
+                self._id_logic.generic_nominal_key = hname
+                self._eventcount = self._file_handler.get_integral(hname)
         else:
             s = "'%s' does not exist " % hname
             s += "in '%s'" % self._file_handler.filepath
+
+    @property
+    def systematic_hist_name(self):
+        return self._systkey
+    @systematic_hist_name.setter
+    def systematic_hist_name(self, key):
+        if self._id_logic.is_allowed_key(key):
+            self._systkey = key
+    
 
     def __str__(self):
         """
@@ -203,9 +215,11 @@ class processObject(object):
         if isinstance(syst, str) and isinstance(typ, str):
             if not syst in self._uncertainties:
                 if typ == "shape":
-                    print "Looking for varied histograms for systematic"
-                    # if self._file_handler.histogram_exists(self._rootfile, 
-                    #                     self._systkey.replace(self._sy))
+                    print "Looking for varied histograms for systematic", syst
+                    keys = self._id_logic.build_systematic_histo_names(
+                            systematic_name = syst, base_key = self._systkey)
+                    if not all(self._file_handler.histogram_exists(k) for k in keys):
+                        return False
                 if self._value_rules.is_good_systval(value):
                     self._uncertainties[syst] = {}
                     self._uncertainties[syst]["type"] = typ

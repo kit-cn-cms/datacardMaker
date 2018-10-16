@@ -23,6 +23,7 @@ class identificationLogic(object):
                                      (member variable: _systIden)
     """
     _debug = 99
+    _allowed_dependencies = ["process", "channel"]
     def init_variables(self):
         """
         define member variables here
@@ -32,6 +33,7 @@ class identificationLogic(object):
         self._procIden = "$PROCESS" #Identifier keyword for processes
         self._chIden   = "$CHANNEL" #Identifier keyword for categories/channels
         self._systIden = "$SYSTEMATIC"  #Identifier keyword for systematics
+        self._belongs_to = None
 
     def __init__(   self, generic_nominal_key = "", generic_systematics_key = "", 
                     process_id_key = "", channel_id_key = "", 
@@ -113,38 +115,56 @@ class identificationLogic(object):
     @systematics_identificator.setter
     def systematics_identificator(self, key):
         self._systIden = key
+
+    @property
+    def belongs_to(self):
+        return self._belongs_to
+    @belongs_to.setter
+    def belongs_to(self, value):
+        if value in self._allowed_dependencies:
+            self._belongs_to = value
+        else:
+            print "ERROR: Dependency to '%s' is not allowed!" % value
+
+
     
     def insert_channel(self, channel_name, base_key):
         """
         build a key from 'base_key' for a specific channel 'channel_name'.
         """
-        if not base_key is None or base_key == "":
+        if base_key is None or base_key == "":
             print "unsuitable base_key!"
             return "" 
-        if self._chIden in base_key:
-            return base_key.replace(self._chIden, channel_name)
+        if not channel_name == "" and not channel_name is None:
+            if self._chIden in base_key:
+                return base_key.replace(self._chIden, channel_name)
+        return base_key
 
     def insert_process(self, process_name, base_key):
         """
         build a key from 'base_key' for a specific process 'process_name'.
         """
-        if not base_key is None or base_key == "":
+        if base_key is None or base_key == "":
             print "unsuitable base_key!"
             return "" 
-        if self._procIden in base_key:
-            return base_key.replace(self._procIden, process_name)
+        if not process_name == "" and not process_name is None:
+            if self._procIden in base_key:
+                return base_key.replace(self._procIden, process_name)
+        return base_key
 
     def insert_systematic(self, systematic_name, base_key):
         """
         build a key from 'base_key' for a specific systematic 'systematic_name'.
         """
-        if not base_key is None or base_key == "":
+        if base_key is None or base_key == "":
             print "unsuitable base_key!"
             return "" 
-        if self._systIden in base_key:
-            return base_key.replace(self._systIden, systematic_name)
+        if not systematic_name == "" and not systematic_name is None:
+            if self._systIden in base_key:
+                return base_key.replace(self._systIden, systematic_name)
+        return base_key
 
-    def build_nominal_histo_name(   self, process_name, channel_name, 
+    def build_nominal_histo_name(   self, process_name, channel_name = "", 
                                     base_key = ""):
         """
         build nominal histogram name for process 'process_name' in 
@@ -159,8 +179,10 @@ class identificationLogic(object):
                                     base_key = key)
         return key
 
-    def build_systematics_histo_name_down(   self, process_name, channel_name,
-                                        systematic_name, base_key = ""):
+    def build_systematic_histo_name_down(   self, process_name = "",
+                                            channel_name = "", 
+                                            systematic_name = "", 
+                                            base_key = ""):
         """
         build systematic histogram name for process 'process_name' in 
         category 'channel_name' and 'down' variation for 
@@ -177,15 +199,21 @@ class identificationLogic(object):
                                         base_key = key)
         return key+"Down"
 
-    def build_systematics_histo_name_up(   self, process_name, channel_name,
-                                        systematic_name, base_key = ""):
+    def build_systematic_histo_name_up(   self, process_name = "", 
+                                        channel_name = "", systematic_name = "",
+                                        base_key = ""):
         """
         build systematic histogram name for process 'process_name' in 
         category 'channel_name' and 'up' variation for 
         systematic 'systematic_name'. The histogram is built based on the 
         generic systematic histogram key by default.
         """
+        if self._debug >= 99:
+            print "DEBUG: Building name for systematic up variation from", base_key
         if base_key == "" or not isinstance(base_key, str):
+            if self._debug >= 99:
+                s = "DEBUG: Bad base key detected!"
+                s += " Will replace it with", self._generic_syst_key
             base_key = self._generic_syst_key
         key = self.insert_process(  process_name=process_name,
                                     base_key = base_key)
@@ -195,8 +223,9 @@ class identificationLogic(object):
                                         base_key = key)
         return key+"Up"
 
-    def build_systematics_histo_names(   self, process_name, channel_name,
-                                        systematic_name, base_key = ""):
+    def build_systematic_histo_names(   self, process_name = "", 
+                                        channel_name = "", systematic_name = "", 
+                                        base_key = ""):
         """
         build systematic histogram name for process 'process_name' in 
         category 'channel_name' and systematic 'systematic_name'. 
@@ -205,11 +234,11 @@ class identificationLogic(object):
         first one is for 'up' variation
         second one is for 'down' variation
         """
-        up = self.build_systematics_histo_name_up(process_name = process_name, 
+        up = self.build_systematic_histo_name_up(process_name = process_name, 
                                             channel_name = channel_name, 
                                             systematic_name = systematic_name, 
                                             base_key = base_key)
-        down = self.build_systematics_histo_name_down(process_name=process_name, 
+        down = self.build_systematic_histo_name_down(process_name=process_name, 
                                             channel_name = channel_name, 
                                             systematic_name = systematic_name, 
                                             base_key = base_key)
@@ -252,3 +281,11 @@ class identificationLogic(object):
         if temp == self._generic_syst_key:
             return True
         return False
+
+    def is_allowed_key(self, key):
+        return True
+        # if
+        # if not key is None and not key == "":
+        #     if not self._procIden in key:
+        #         return True
+        # return False
