@@ -9,7 +9,7 @@ class test:
         self._header = []
         self._process = []
         self._categoryprocess = ""
-        self._category = []
+        self._category = {}
         self._bin = ""
         
         
@@ -101,7 +101,7 @@ class test:
                         
     def file_to_object(self,pathToDatacard):
         for category in self._category_:
-            self._category.append(categoryObject(category,self._categories_[category]["shapes"]["default"]["rootfile"],self._categories_[category]["shapes"]["default"]["hist"],self._categories_[category]["shapes"]["default"]["systhist"],None,None,None,None,None))
+            self._category[category]=(categoryObject(category,self._categories_[category]["shapes"]["default"]["rootfile"],self._categories_[category]["shapes"]["default"]["hist"],self._categories_[category]["shapes"]["default"]["systhist"],None,None,None,None,None))
             for process in self._process_[category]:
                 if not self._categories_[category][process]["shapes"]:
                     self._process.append(processObject(process,self._categories_[category]["shapes"]["default"]["rootfile"],self._categories_[category]["shapes"]["default"]["hist"],self._categories_[category]["shapes"]["default"]["systhist"],category))
@@ -112,13 +112,14 @@ s = test("testdatacard.txt")
 s.load_from_file("testdatacard.txt")
 print s._categories_
 print s._categories_["ljets_j5_tge4_DeepCSV"]["ttbarPlus2B"]
-
 s.file_to_object("testdatacard.txt")
-print s._category
 print s._process
 for process in s._process:
+    s._category["ljets_j5_tge4_DeepCSV"].add_signal_process(process)
     print process.get_name()
     print process.get_category()
+for category in s._category:
+    print category
 #d = test("combinedtestdatacard.txt")
 #d.load_from_file("combinedtestdatacard.txt")
 #print d._categories_

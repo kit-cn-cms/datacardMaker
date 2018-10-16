@@ -116,6 +116,43 @@ class categoryObject(object):
     def name(self, val):
         self._name = val
     
+    @property
+    def rootfile(self):
+        return self._rootfile
+    
+    @rootfile.setter
+    def rootfile(self, rootpath):
+        if path.exists(rootpath):
+            self._rootfile = rootpath
+        else:
+            print "file '%s' does not exist!" % rootpath
+
+    @property
+    def nominalhistname(self):
+        return self._nomkey
+
+    @nominalhistname.setter
+    def nominalhistname(self, hname):
+        
+        if self.file_handler.histogram_exists(file = self._rootfile,
+                                        histname = hname):
+            self._nomkey = hname
+        else:
+            print "'%s' does not exist in '%s'" % (hname, self._rootfile)
+            
+    @property
+    def systname(self):
+        return self._systkey
+            
+    @shistname.setter
+    def systname(self, hname):
+        
+        if self.file_handler.histogram_exists(file = self._rootfile,
+                                        histname = hname):
+            self._systkey = hname
+        else:
+            print "'%s' does not exist in '%s'" % (hname, self._rootfile)
+    
         
     
     def add_signal_process( self, name, rootfile, 
@@ -198,7 +235,12 @@ class categoryObject(object):
             dic[process.name] = process
         else:
             print "ERROR: Category can only contain processes!"
-
+            
+    def __getitem__(self, process):
+        for bkgprocs in self._bkpgprocs:
+            if bkgprocs=process:
+                return bkgprocs
+            
     def __str__(self):
         s = []
         s.append("Category Name:\t%s" % self._name)
