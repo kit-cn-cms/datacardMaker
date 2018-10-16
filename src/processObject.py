@@ -19,7 +19,7 @@ class processObject(object):
     
     def init_variables(self):
         self._name = ""
-        self._rootfile = ""
+        # self._rootfile = ""
         self._categoryname = ""
         self._nominalhistname = ""
         self._systkey = ""
@@ -36,7 +36,7 @@ class processObject(object):
         if not processName is None:
             self._name              = processName
         if not pathToRootfile is None:
-            self._rootfile          = pathToRootfile
+            self._file_handler.filepath = pathToRootfile
         if not nominal_hist_key is None:
             self._nominalhistname   = nominal_hist_key
         if not categoryname is None:
@@ -159,7 +159,7 @@ class processObject(object):
         if self._file_handler.histogram_exists(histname = hname):
             #following if statement should be redundand
             if self._id_logic.is_allowed_key(hname): 
-                self._id_logic.generic_nominal_key = hname
+                self._nominalhistname = hname
                 self._eventcount = self._file_handler.get_integral(hname)
         else:
             s = "'%s' does not exist " % hname
@@ -185,7 +185,7 @@ class processObject(object):
         s.append("Process infos:")
         s.append("\tname:\t%s" % self.get_name())
         s.append("\tcategory:\t%s" % self.get_category())
-        s.append("\trootfile:\t%s" % self._rootfile)
+        s.append("\trootfile:\t%s" % self._file_handler.filepath)
         s.append("\tnominal histname:\t%s" % self._nominalhistname)
         s.append("\tyield:\t{0}".format(self._eventcount))
         if len(self._uncertainties) != 0:

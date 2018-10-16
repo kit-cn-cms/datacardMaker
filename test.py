@@ -39,6 +39,13 @@ def datacard_tests():
 	category.add_signal_process(testproc)
 	print category
 
+	dm = datacardMaker()
+	dm.add_category(category)
+	dm.outputpath = "test.txt"
+	dm.hardcode_numbers = True
+	dm.replace_files = True
+	dm.write_datacard()
+
 def init_tests():
 	a = testClass()
 
