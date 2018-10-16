@@ -10,7 +10,7 @@ from processObject import processObject
 from systematicObject import systematicObject
 
 class datacardMaker(object):
-    
+    _debug = 200
     def init_variables(self):
         self._header            = []
         self._bins              = ""
@@ -19,7 +19,7 @@ class datacardMaker(object):
         self._systematics       = {}
         self._hardcode_numbers  = False
         self._replace_files     = False
-        self._outputpath        = "/path/for/datacard.txt"
+        self._outputpath        = ""
         self._block_separator   = "-"*130
 
     def __init__(   self, pathToDatacard = "", 
@@ -47,6 +47,8 @@ class datacardMaker(object):
     def replace_files(self, val):
         if type(val) == bool:
             self._replace_files = val
+            if self._debug >= 99:
+                print "DEBUG: setting 'replace_files' to", val
         else:
             print "Value given is not boolean! Did not set 'replace_files'"
 
@@ -58,13 +60,13 @@ class datacardMaker(object):
         if outpath is None:
             print "'outpath' cannot be None!"
         elif path.exists(outpath):
+            outpath = path.abspath(outpath)
+            self._outputpath = outpath
             if self._replace_files:
-                outpath = path.abspath(outpath)
-                self._outputpath = outpath
                 print "will replace", self._outputpath
             else:
-                s = "File %s already exists" % outpath
-                s += " and I'm not allowed to overwrite - Skipping"
+                s = "WARNING: File %s already exists" % outpath
+                s += " and I'm not allowed to overwrite"
                 print s
         else:
             outpath = path.abspath(outpath)
@@ -85,6 +87,17 @@ class datacardMaker(object):
         self._block_separator = sep
     
     
+    def add_category(self, category):
+        if isinstance(category, categoryObject):
+            catname = category.name
+            if not catname in self._categories:
+                self._categories[catname] = category
+            else:
+                print "ERROR: Category %s is known to this datacard!" % catname
+        else:
+            print "ERROR: Input required to be instance of categoryObject!"
+
+
     def load_from_file(self, pathToDatacard):
         if path.exists(pathToDatacard):
             print "loading datacard from", pathToDatacard
@@ -147,11 +160,11 @@ class datacardMaker(object):
                                     proc.rootfile = shape[3]
                                     proc.nominalhistname=shape[4]
                                     proc.systname=shape[5]
-                                    #self._categories[category].rootfile = shape[3]
-                                    #self._categories[category].nominalhistname = shape[4]
-                                    #self._categories[category].systname = shape[5]
-                            for process in self._process_[category]:
-                                if shape[1] == process:
+                                    #self._categories[category].default_file = shape[3]
+                                    #self._categories[category].generic_key_nominal_hist = shape[4]
+                                    #self._categories[category].generic_key_systematic_hist = shape[5]
+                            
+                            if shape[1] == process:
                                     proc.rootfile=shape[3]
                                     proc.nominalhistname=shape[4]
                                     proc.systname=shape[5]
@@ -188,7 +201,7 @@ class datacardMaker(object):
             currentnum += self._categories[cat].n_background_procs
             if num == 0: num = currentnum
             if not num == currentnum:
-                print "Mismatch! Categories have different number of process!"
+                print "Mismatch! Categories have different number of processes!"
                 num = 0
                 break
         return num
@@ -223,6 +236,8 @@ class datacardMaker(object):
             #get number of systematics
             if len(self._systematics) != 0:
                 nsysts = len(self._systematics)
+            else:
+                print "WARNING: Did not find any systematics!"
         
 
         header.append("imax {0} number of bins".format(ncats))
@@ -299,18 +314,25 @@ class datacardMaker(object):
         """
         pass
 
+    def create_datacard_text(self):
+        #create datacard header 
+        content = []
+        content.append(self.create_header())
+        #create block with keywords for systematic variations
+
+        #create observation block
+        return self._block_separator.join(content)
+
     def write_datacard(self):
-        if path.exists(self._outputpath):
-            #create datacard header 
-            content = []
-            content.append(self.create_header())
-            #create block with keywords for systematic variations
+        text = ""
+        if self._outputpath and not path.exists(self._outputpath):
+            text = self.create_datacard_text()
+        elif path.exists(self._outputpath) and self._replace_files:
+            text = self.create_datacard_text()
 
-            #create observation block
-
-
+        if not text == "":
             with open(self._outputpath, "w") as f:
-                f.write(self._block_separator.join(content))
+               f.write(text)
         else:
             print "ERROR: Could not write datacard here:", self._outputpath
 
