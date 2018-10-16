@@ -139,6 +139,7 @@ class datacardMaker(object):
                     proc=processObject()
                     proc.name = process 
                     proc.category = category
+                    
                     for shapelines in self._shapelines_:
                         shape = shapelines.split()
                         if shape[2] == category or shape[2]=="*":
@@ -170,7 +171,7 @@ class datacardMaker(object):
                  systematic.pop(0)
                  for value,process,category in zip(systematic,processes,binprocesses):
                      if value!="-":
-                        #self._categories[category] .add_uncertainty(sys,typ,value)
+                        self._categories[category][process].add_uncertainty(sys,typ,value)
             
              
         else:

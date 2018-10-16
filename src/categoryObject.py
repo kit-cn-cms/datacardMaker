@@ -237,9 +237,12 @@ class categoryObject(object):
             print "ERROR: Category can only contain processes!"
             
     def __getitem__(self, process):
-        for bkgprocs in self._bkpgprocs:
-            if bkgprocs=process:
-                return bkgprocs
+        for name,procobj in self._bkpgprocs.items():
+            if name==process:
+                return procobj
+        for name,procobj in self._signalprocs.items():
+            if name==process:
+                return procobj
             
     def __str__(self):
         s = []
