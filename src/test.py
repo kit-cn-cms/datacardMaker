@@ -1,18 +1,13 @@
-categories = []
-with open("testdatacard.txt") as datacard:
-                lines = datacard.read().splitlines()
-                for n, line in enumerate(lines):
-                    if line.startswith("process") and lines[n+1].startswith("process"):
-                        categories.append(line)
-                        
-#for entry in categories:
-category = categories[0].split()
+from processObject import processObject
+from categoryObject import categoryObject
+from systematicObject import systematicObject
+
 
 class test:
     def __init__( self, pathToDatacard):
         self._categories = []
         self._header = []
-        self._process = ""
+        self._process = []
         self._categoryprocess = ""
         self._category = []
         self._bin = ""
@@ -96,8 +91,6 @@ class test:
                  systematic = systematics.split()
                  sys=systematic[0]
                  typ=systematic[1]
-                 print sys
-                 print typ
                  systematic.pop(1)
                  systematic.pop(0)
                  for value,process,category in zip(systematic,processes,binprocesses):
@@ -105,12 +98,30 @@ class test:
                         self._categories_[category][process]["systematics"][sys]={}
                         self._categories_[category][process]["systematics"][sys]["type"]=typ
                         self._categories_[category][process]["systematics"][sys]["value"]=value
-    
+                        
+    def file_to_object(self,pathToDatacard):
+        for category in self._category_:
+            self._category.append(categoryObject(category,self._categories_[category]["shapes"]["default"]["rootfile"],self._categories_[category]["shapes"]["default"]["hist"],self._categories_[category]["shapes"]["default"]["systhist"],None,None,None,None,None))
+            for process in self._process_[category]:
+                if not self._categories_[category][process]["shapes"]:
+                    self._process.append(processObject(process,self._categories_[category]["shapes"]["default"]["rootfile"],self._categories_[category]["shapes"]["default"]["hist"],self._categories_[category]["shapes"]["default"]["systhist"],category))
+                else:
+                    self._process.append(processObject(process,self._categories_[category][process]["shapes"]["rootfile"],self._categories_[category][process]["shapes"]["hist"],self._categories_[category][process]["shapes"]["systhist"],category))
                         
 s = test("testdatacard.txt")
 s.load_from_file("testdatacard.txt")
 print s._categories_
 print s._categories_["ljets_j5_tge4_DeepCSV"]["ttbarPlus2B"]
 
+s.file_to_object("testdatacard.txt")
+print s._category
+print s._process
+for process in s._process:
+    print process.get_name()
+    print process.get_category()
+#d = test("combinedtestdatacard.txt")
+#d.load_from_file("combinedtestdatacard.txt")
+#print d._categories_
+#print d._categories_["ch1"]["ttbarPlus2B"]
 
 
