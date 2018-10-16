@@ -8,13 +8,12 @@ from processObject import processObject
 from identificationLogic import identificationLogic
 
 class categoryObject(object):
-
+    _debug     = True
     def init_variables(self):
         self._name     = "categoryName"
         self._data_obs = None
         self._signalprocs = {}
         self._bkgprocs    = {}
-        self._debug     = True
         self._key_creator = identificationLogic()
     
     def __init__(   self, categoryName=None, defaultRootFile=None, 
