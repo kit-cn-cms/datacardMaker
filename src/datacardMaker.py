@@ -148,11 +148,11 @@ class datacardMaker(object):
             processtypes.pop(0)
                         
             if len(processes)==len(binprocesses) and len(processes)==len(processtypes):
-                for process,category,processtype in zip(processes,binprocesses,processtypes):
+                for process,category,pt in zip(processes,binprocesses,processtypes):
                     proc=processObject()
                     proc.name = process 
                     proc.category = category
-                    
+		    processtype = int(pt)
                     for shapelines in self._shapelines_:
                         shape = shapelines.split()
                         if shape[2] == category or shape[2]=="*":
@@ -170,7 +170,7 @@ class datacardMaker(object):
                                     proc.systname=shape[5]
                                         
                                          
-                    if processtype > 0:
+                    if processtype >= 1:
                         self._categories[category].add_background_process(proc)
                     else:
                         self._categories[category].add_signal_process(proc)
