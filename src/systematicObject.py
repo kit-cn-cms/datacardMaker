@@ -67,7 +67,7 @@ class systematicObject(object):
             temp = "ERROR: process '%s'" % procname
             temp += " in category '%s'" % category
             temp += " is already known to systematic '%s'!" % self._name
-            temp += " Use 'processObject_base.set_correlation()' instead"
+            temp += " Use 'processObject.set_correlation()' instead"
             print temp
         
     def add_process(self, dic, category):
@@ -84,10 +84,12 @@ class systematicObject(object):
             temp += " is unknowns to systematic '%s'" % self._name
             print temp
     
-    def add_process(self, process, correlation):
-        if isinstance(process, processObject_base):
+    def add_process(self, process, correlation = "-"):
+        if isinstance(process, processObject):
             cor = self.get_correlation(process.category, process.name)
             if cor == "-":
+                if correlation == "-":
+                    correlation = process.get_uncertainty_value(systname = self._name)
                 self.add_process(   category = process.category, 
                                     procname = process.name, 
                                     value = correlation)
@@ -97,7 +99,7 @@ class systematicObject(object):
                 temp += "Use the 'set_correlation' function"
                 print temp
         else:
-            print "ERROR: Could not add process - input must be processObject_base"
+            print "ERROR: Could not add process - input must be processObject"
 
     def get_correlation(self, category, procname):
         if category in self._dic:
@@ -123,15 +125,20 @@ class systematicObject(object):
             temp += " is unknown to systematic '%s'" % self._name
             print temp
 
-    def set_correlation(self, process, value):
-        if isinstance(process, processObject_base):
+    def set_correlation(self, process, value = "-"):
+        if isinstance(process, processObject):
             procname = process.name
             category = process.category
+            if value == "-":
+                value = process.get_uncertainty_value(systname = self._name)
             if procname in self._dic[category]:
                 if self.helper.is_good_systval(value):
                     self._dic[category][procname] = value
             else:
-                print "Could not add process: input must be dictionary!"
+                s = "ERROR: Process '%s' is not known yet to" % procname
+                s += " systematic '%s'!" % self._name
+                s += " Please use 'systematicObject.add_process' instead"
+                print s
         else:
-            print "ERROR: Could not set process - input must be processObject_base"
+            s = "ERROR: Could not set process! Input must be processObject"
     
