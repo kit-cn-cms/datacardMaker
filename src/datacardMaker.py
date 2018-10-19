@@ -91,6 +91,7 @@ class datacardMaker(object):
             catname = category.name
             if not catname in self._categories:
                 self._categories[catname] = category
+                # self.update_systematics(category = category)
             else:
                 print "ERROR: Category %s is known to this datacard!" % catname
         else:
@@ -138,6 +139,29 @@ class datacardMaker(object):
                 break
         return num
 
+    def collect_uncertainties(self, process_dict):
+        """
+        Loop over all process in the dictionary 'process_dict' and save
+        the respective systematic uncertainties and correlations
+        """
+        for process in process_dict:
+            for syst in process.uncertainties:
+                #first, check if uncertainty is already known
+                #if not, create new systematicsObject
+                if not syst in self._systematics:
+                    self._systematics[syst] = systematicObject(name = syst,
+                                    nature = process.get_uncertainty_type())
+                self._systematics[syst].add_process(process = process)
+
+
+    def update_systematics(self, category):
+        
+        self.collect_uncertainties(process_dict = category.signal_processes)
+        self.collect_uncertainties(process_dict = category.background_processes)
+            
+
+
+
     def create_header(self):
         """
         Create header for the datacard. The header has the following form:
@@ -177,6 +201,27 @@ class datacardMaker(object):
         header.append("kmax {0} number of nuisance parameters".format(nsysts))
         return "\n".join(header)
 
+    def write_keyword_block_line(self, process_name, category_name, file, 
+                                    nominal_key, syst_key):
+        s = ["shapes"]
+        s.append(process_name)
+        s.append(category_name)
+        s.append(file)
+        s.append(nominal_key)
+        s.append(syst_key)
+
+        return s
+
+    def write_keyword_block_lines(self, category):
+        lines = []
+        line = self.write_keyword_block_line(process_name = "*", 
+            category_name = category.name, file = category.default_file, 
+            nominal_key = category.generic_key_nominal_hist, 
+            syst_key = category.generic_key_systematic_hist)
+
+        
+
+
     def create_keyword_block(self):
         """
         Create block with keywords with which to find the systematic variations
@@ -194,7 +239,11 @@ class datacardMaker(object):
                               used before, this should contain '$CHANNEL' 
                               and/or '$PROCESS'
         """
-        pass
+        lines = []
+        for cat in self._categories:
+            if any(cat in syst._dict and syst.type == "shape" for syst in self._systematics):
+                lines += self.write_keyword_block_lines(category = self._categories[cat])
+        return "\n".join(lines)
 
     def create_observation_block(self):
         """
@@ -249,6 +298,8 @@ class datacardMaker(object):
     def create_datacard_text(self):
         #create datacard header 
         content = []
+        for cat in self._categories:
+            self.update_systematics(self._categories[cat])
         content.append(self.create_header())
         #create block with keywords for systematic variations
 
