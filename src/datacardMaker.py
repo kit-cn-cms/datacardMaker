@@ -147,7 +147,7 @@ class datacardMaker(object):
             binprocesses.pop(0) 
             processtypes = self._processtype_.split()
             processtypes.pop(0)
-                        
+            
             if len(processes)==len(binprocesses) and len(processes)==len(processtypes):
                 for process,category,pt in zip(processes,binprocesses,processtypes):
                     proc=processObject()
