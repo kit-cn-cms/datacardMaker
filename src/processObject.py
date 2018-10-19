@@ -304,6 +304,7 @@ class processObject(object):
         if systname in self._uncertainties:
             return self._uncertainties[systname]["type"]
         else:
+
             return ""
 
     # def get_uncertainty(self, systname):

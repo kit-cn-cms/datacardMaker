@@ -141,6 +141,7 @@ class categoryObject(object):
             self._default_file = path
         else:
             print "ERROR: File '%s' does not exist!" % path
+
     
 
 
@@ -230,6 +231,17 @@ class categoryObject(object):
             dic[process.name] = process
         else:
             print "ERROR: Category can only contain processes!"
+
+            
+    def __getitem__(self, process):
+        for name,procobj in self._bkgprocs.items():
+            if name==process:
+                return procobj
+        for name,procobj in self._signalprocs.items():
+            if name==process:
+                return procobj
+            
+
 
     def add_process_raw(self, dic, name, rootfile, histoname, systkey):
         temp = processObject(processName = name, pathToRootfile = rootfile, 

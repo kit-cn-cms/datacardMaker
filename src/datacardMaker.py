@@ -6,6 +6,7 @@ if not directory in sys.path:
     sys.path.append(directory)
 
 from categoryObject import categoryObject
+from processObject import processObject
 from systematicObject import systematicObject
 
 class datacardMaker(object):
@@ -104,6 +105,10 @@ class datacardMaker(object):
             with open(pathToDatacard) as datacard:
                 lines = datacard.read().splitlines()
                 self._shapelines_ = []
+                self._systematics_ = []
+                self._processes_= ""
+                self._binprocesses_= ""
+                self._processtype_ = ""
                 for n, line in enumerate(lines):
                     if line.startswith("-"):
                             continue
@@ -115,11 +120,74 @@ class datacardMaker(object):
                     elif line.startswith("shapes"):
                         self._shapelines_.append(line)
                     elif line.startswith("process") and n != 0 and lines[n-1].startswith("bin"):
+                        self._processes_= line
+                        self._binprocesses_= lines[n-1]  
+                        self._processtype_ = lines[n+1]
+                    elif line.startswith("bin") and lines[n+1].startswith("process"):
+                        pass
+                    elif line.startswith("process") and lines[n+1].startswith("rate"):
+                        pass
+                    elif line.startswith("observation") or line.startswith("rate"):
                         pass
                     else:
-                        pass
+                        self._systematics_.append(line)
+            
+            #create categoryObject for each category
+            bins=self._bins.split()
+            bins.pop(0)
+            for category in bins:
+                self._categories[category] = categoryObject()
+                self._categories[category].name = category
+            
+            
+            #create processObjects for each process in a category            
+            processes = self._processes_.split()
+            processes.pop(0)
+            binprocesses = self._binprocesses_.split()
+            binprocesses.pop(0) 
+            processtypes = self._processtype_.split()
+            processtypes.pop(0)
                         
-                        
+            if len(processes)==len(binprocesses) and len(processes)==len(processtypes):
+                for process,category,pt in zip(processes,binprocesses,processtypes):
+                    proc=processObject()
+                    proc.name = process 
+                    proc.category = category
+		    processtype = int(pt)
+                    for shapelines in self._shapelines_:
+                        shape = shapelines.split()
+                        if shape[2] == category or shape[2]=="*":
+                            if shape[1] == "*":
+                                    proc.rootfile = shape[3]
+                                    proc.nominalhistname=shape[4]
+                                    proc.systname=shape[5]
+                                    #self._categories[category].default_file = shape[3]
+                                    #self._categories[category].generic_key_nominal_hist = shape[4]
+                                    #self._categories[category].generic_key_systematic_hist = shape[5]
+                            
+                            if shape[1] == process:
+                                    proc.rootfile=shape[3]
+                                    proc.nominalhistname=shape[4]
+                                    proc.systname=shape[5]
+                                        
+                                         
+                    if processtype >= 1:
+                        self._categories[category].add_background_process(proc)
+                    else:
+                        self._categories[category].add_signal_process(proc)
+            
+            #adds systematics to processes
+            for systematics in self._systematics_:
+                 systematic = systematics.split()
+                 sys=systematic[0]
+                 typ=systematic[1]
+                 systematic.pop(1)
+                 systematic.pop(0)
+                 for value,process,category in zip(systematic,processes,binprocesses):
+                     if value!="-":
+                        self._categories[category][process].add_uncertainty(sys,typ,value)
+            
+             
         else:
             print "could not load %s: no such file" % pathToDatacard
     
