@@ -109,4 +109,4 @@ class fileHandler(object):
         if h:
             return h.Integral()
         else:
-            return None
+            return -1

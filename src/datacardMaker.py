@@ -92,6 +92,7 @@ class datacardMaker(object):
             catname = category.name
             if not catname in self._categories:
                 self._categories[catname] = category
+                # self.update_systematics(category = category)
             else:
                 print "ERROR: Category %s is known to this datacard!" % catname
         else:
@@ -99,8 +100,15 @@ class datacardMaker(object):
 
 
     def load_from_file(self, pathToDatacard):
+        """
+        Reads datacard from file. Creates categoryObjects for each category and
+        processObjects for the corresponding processes. 
+        Adds filename, nominal histname and systematic histname.
+        Adds systematics for corresponding processes.
+        """
         if path.exists(pathToDatacard):
             print "loading datacard from", pathToDatacard
+            #Read datacard from file.
             with open(pathToDatacard) as datacard:
                 lines = datacard.read().splitlines()
                 self._shapelines_ = []
@@ -109,6 +117,7 @@ class datacardMaker(object):
                 self._binprocesses_= ""
                 self._processtype_ = ""
                 for n, line in enumerate(lines):
+                    #missing lines for advanced datacards, only working for simple ones
                     if line.startswith("-"):
                             continue
                     elif line.startswith("Combination") or line.startswith("imax") or line.startswith("kmax") or line.startswith("jmax"):
@@ -131,7 +140,7 @@ class datacardMaker(object):
                     else:
                         self._systematics_.append(line)
             
-            #create categoryObject for each category
+            #Create categoryObject for each category
             bins=self._bins.split()
             bins.pop(0)
             for category in bins:
@@ -139,59 +148,95 @@ class datacardMaker(object):
                 self._categories[category].name = category
             
             
-            #create processObjects for each process in a category            
+            #Create processObjects for each process in a category 
+            #and add it to its correspoding categoryObjects           
             processes = self._processes_.split()
             processes.pop(0)
             binprocesses = self._binprocesses_.split()
             binprocesses.pop(0) 
             processtypes = self._processtype_.split()
             processtypes.pop(0)
-                        
-            if len(processes)==len(binprocesses) and len(processes)==len(processtypes):
-                for process,category,pt in zip(processes,binprocesses,processtypes):
-                    proc=processObject()
-                    proc.name = process 
-                    proc.category = category
-		    processtype = int(pt)
-                    for shapelines in self._shapelines_:
-                        shape = shapelines.split()
-                        if shape[2] == category or shape[2]=="*":
-                            if shape[1] == "*":
-                                    proc.rootfile = shape[3]
-                                    proc.nominal_hist_name=shape[4]
-                                    proc.systematic_hist_name=shape[5]
-                                    print shape [3]
-                                    print shape [4]
-                                    #self._categories[category].default_file = shape[3]
-                                    #self._categories[category].generic_key_nominal_hist = shape[4]
-                                    #self._categories[category].generic_key_systematic_hist = shape[5]
-                            
-                            if shape[1] == process:
-                                    proc.rootfile=shape[3]
-                                    proc.nominal_hist_name=shape[4]
-                                    proc.systematic_hist_name=shape[5]
-                                        
-                                         
-                    if processtype >= 1:
-                        self._categories[category].add_background_process(proc)
-                    else:
-                        self._categories[category].add_signal_process(proc)
             
+            assert len(processes)==len(binprocesses) 
+            assert len(processes)==len(processtypes)
+            for process,category,pt in zip(processes,binprocesses,processtypes):
+
+                proc=processObject(processName=process, categoryName=category)
+                processtype = int(pt)
+                #checks if process is a background or signal process and 
+                #adds it to the categoryObject
+                if processtype >= 1:
+                    self._categories[category].add_background_process(proc)
+                else:
+                    self._categories[category].add_signal_process(proc)
+
+                    
+
+            #add filename, nominal histnam and systematic histname
+            #for processObjects and categoryObjects
+            for shapelines in self._shapelines_:
+                shape = shapelines.split()
+                category_name = shape[2]
+                process_name = shape[1]
+                if category_name=="*":
+                    for category in self._categories:
+                        self.add_generic_keys(category_name=category,
+                            list_of_shapelines=shape)
+                        self.manage_processes(category_name=category,
+                         process_name=process_name,list_of_shapelines=shape)
+                elif category_name in self._categories:
+                    self.add_generic_keys(category_name=category,
+                        list_of_shapelines=shape)
+                    self.manage_processes(category_name = category_name,
+                         process_name=process_name,list_of_shapelines=shape)
+
+
             #adds systematics to processes
             for systematics in self._systematics_:
-                 systematic = systematics.split()
-                 sys=systematic[0]
-                 typ=systematic[1]
-                 systematic.pop(1)
-                 systematic.pop(0)
-                 for value,process,category in zip(systematic,processes,binprocesses):
-                     if value!="-":
-                        self._categories[category][process].add_uncertainty(sys,typ,value)
+                systematic = systematics.split()
+                sys=systematic[0]
+                typ=systematic[1]
+                systematic.pop(1)
+                systematic.pop(0)
+                for value,process,category in zip(systematic,processes,binprocesses):
+                    if value!="-":
+                        self._categories[category][process].add_uncertainty( syst = sys,
+                                                            typ = typ, value = value)
             
              
         else:
             print "could not load %s: no such file" % pathToDatacard
-    
+
+
+    def add_generic_keys(self,category_name,list_of_shapelines):
+        self._categories[category_name].default_file = list_of_shapelines[3]
+        self._categories[category_name].generic_key_nominal_hist = list_of_shapelines[4]
+        self._categories[category_name].generic_key_systematic_hist = list_of_shapelines[5]
+
+
+    def manage_processes(self, category_name, process_name, list_of_shapelines):
+        """
+        Search process corresponding to shapeline and add the key names
+        """
+        if process_name == "*":
+            #for process in self._categories[category_name].processes():
+            for process in self._categories[category_name]:
+                self.add_keys(category_name=category_name,
+                    process_name=process,list_of_shapelines=list_of_shapelines)
+        #elif process_name in self._categories[category_name].processes():
+        elif process_name in self._categories[category_name]:
+            self.add_keys(category_name=category_name,
+                    process_name=process_name,list_of_shapelines=list_of_shapelines)
+
+
+    def add_keys(self, category_name,process_name,list_of_shapelines):
+        """
+        add filename, nominal key and systematic key to processObject
+        """
+        self._categories[category_name][process_name].file = list_of_shapelines[3]
+        self._categories[category_name][process_name].nominal_hist_name = list_of_shapelines[4]
+        self._categories[category_name][process_name].systematic_hist_name = list_of_shapelines[5]
+
     def get_number_of_procs(self):
         """
         Get number of processes. Returns 0 if some categories have different
@@ -207,6 +252,30 @@ class datacardMaker(object):
                 num = 0
                 break
         return num
+
+    def collect_uncertainties(self, process_dict):
+        """
+        Loop over all process in the dictionary 'process_dict' and save
+        the respective systematic uncertainties and correlations
+        """
+        for process_name in process_dict:
+            process = process_dict[process_name]
+            for syst in process.uncertainties:
+                #first, check if uncertainty is already known
+                #if not, create new systematicsObject
+                if not syst in self._systematics:
+                    self._systematics[syst] = systematicObject(name = syst,
+                                    nature = process.get_uncertainty_type(syst))
+                self._systematics[syst].add_process(process = process)
+
+
+    def update_systematics(self, category):
+        
+        self.collect_uncertainties(process_dict = category.signal_processes)
+        self.collect_uncertainties(process_dict = category.background_processes)
+            
+
+
 
     def create_header(self):
         """
@@ -247,6 +316,27 @@ class datacardMaker(object):
         header.append("kmax {0} number of nuisance parameters".format(nsysts))
         return "\n".join(header)
 
+    def write_keyword_block_line(self, process_name, category_name, file, 
+                                    nominal_key, syst_key):
+        s = ["shapes"]
+        s.append(process_name)
+        s.append(category_name)
+        s.append(file)
+        s.append(nominal_key)
+        s.append(syst_key)
+
+        return s
+
+    def write_keyword_block_lines(self, category):
+        lines = []
+        line = self.write_keyword_block_line(process_name = "*", 
+            category_name = category.name, file = category.default_file, 
+            nominal_key = category.generic_key_nominal_hist, 
+            syst_key = category.generic_key_systematic_hist)
+
+        
+
+
     def create_keyword_block(self):
         """
         Create block with keywords with which to find the systematic variations
@@ -264,7 +354,11 @@ class datacardMaker(object):
                               used before, this should contain '$CHANNEL' 
                               and/or '$PROCESS'
         """
-        pass
+        lines = []
+        for cat in self._categories:
+            if any(cat in syst._dict and syst.type == "shape" for syst in self._systematics):
+                lines += self.write_keyword_block_lines(category = self._categories[cat])
+        return "\n".join(lines)
 
     def create_observation_block(self):
         """
@@ -319,6 +413,8 @@ class datacardMaker(object):
     def create_datacard_text(self):
         #create datacard header 
         content = []
+        for cat in self._categories:
+            self.update_systematics(self._categories[cat])
         content.append(self.create_header())
         #create block with keywords for systematic variations
 

@@ -15,6 +15,7 @@ class categoryObject(object):
         self._signalprocs = {}
         self._bkgprocs    = {}
         self._key_creator = identificationLogic()
+        self._key_creator.belongs_to = "channel"
         self._default_file = None
     
     def __init__(   self, categoryName=None, defaultRootFile=None, 
@@ -135,16 +136,11 @@ class categoryObject(object):
     def default_file(self):
         return self._default_file
     @default_file.setter
-    def default_file(self, path):
-        if path.exists(path):
-            self._default_file = path
+    def default_file(self, filepath):
+        if path.exists(filepath):
+            self._default_file = filepath
         else:
-            print "ERROR: File '%s' does not exist!" % path
-
-    
-
-
-    
+            print "ERROR: File '%s' does not exist!" % filepath
 
     def add_signal_process( self, name, rootfile = None, histoname = None, 
                             systkey = None):
@@ -225,11 +221,37 @@ class categoryObject(object):
                             
     def add_process(self, dic, process):
         if isinstance(process, processObject):
+            if self._default_file is None:
+                self.default_file = process.file
             dic[process.name] = process
         else:
             print "ERROR: Category can only contain processes!"
 
             
+                
+
+
+    def add_process_raw(self, dic, name, rootfile, histoname, systkey):
+        temp = processObject(processName = name, pathToRootfile = rootfile, 
+                    nominal_hist_key = histoname, systematic_hist_key = systkey, 
+                    categoryname = self._name)
+        self.add_process(dic = dic, process = temp)
+
+    def is_compatible_with_default(self, process):
+        """
+        check whether information for 'process' is compatible with default
+        information for this category
+        """
+        nominal_is_compatible = self._key_creator.matches_generic_nominal_key(  
+            tocheck = process.nominal_hist_name, 
+            process_name = process.name,
+            category_name = self._name)
+        systematic_is_compatible = self._key_creator.matches_generic_systematic_key(  
+            tocheck = process.systematic_hist_name, 
+            process_name = process.name,
+            category_name = self._name)
+        return (nominal_is_compatible and systematic_is_compatible)
+
     def __getitem__(self, process):
         #for name,procobj in self._bkgprocs.items():
             #if name==process:
@@ -242,15 +264,25 @@ class categoryObject(object):
          elif process in self._signalprocs:
              return self._signalprocs[process]
          else:
-             print "ERROR: Process not in Category"
-             
+             print "ERROR: Process not in Category!"
+
+    def __iter__(self):
+        all_processes={}
+        all_processes.update(self._bkgprocs)
+        all_processes.update(self._signalprocs)
+        return all_processes.__iter__()
+
+    def __contains__(self, processName):
+        if processName in self._bkgprocs:
+            return True
+        elif processName in self._signalprocs:
+            return True
+        else:
+            return False
+
+    
 
 
-    def add_process_raw(self, dic, name, rootfile, histoname, systkey):
-        temp = processObject(processName = name, pathToRootfile = rootfile, 
-                    nominal_hist_key = histoname, systematic_hist_key = systkey, 
-                    categoryname = self._name)
-        self.add_process(dic = dic, process = temp)
 
     def __str__(self):
         s = []
