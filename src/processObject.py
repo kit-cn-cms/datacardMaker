@@ -173,6 +173,9 @@ class processObject(object):
         if self._id_logic.is_allowed_key(key):
             self._systkey = key
     
+    @property
+    def uncertainties(self):
+        return list(self._uncertainties.keys())
 
     def __str__(self):
         """
