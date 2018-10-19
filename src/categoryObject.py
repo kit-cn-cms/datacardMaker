@@ -15,6 +15,7 @@ class categoryObject(object):
         self._signalprocs = {}
         self._bkgprocs    = {}
         self._key_creator = identificationLogic()
+        self._key_creator.belongs_to = "channel"
         self._default_file = None
     
     def __init__(   self, categoryName=None, defaultRootFile=None, 
@@ -224,6 +225,8 @@ class categoryObject(object):
                             
     def add_process(self, dic, process):
         if isinstance(process, processObject):
+            if self._default_file is None:
+                self.default_file = process.file
             dic[process.name] = process
         else:
             print "ERROR: Category can only contain processes!"
@@ -233,6 +236,21 @@ class categoryObject(object):
                     nominal_hist_key = histoname, systematic_hist_key = systkey, 
                     categoryname = self._name)
         self.add_process(dic = dic, process = temp)
+
+    def is_compatible_with_default(self, process):
+        """
+        check whether information for 'process' is compatible with default
+        information for this category
+        """
+        nominal_is_compatible = self._key_creator.matches_generic_nominal_key(  
+            tocheck = process.nominal_hist_name, 
+            process_name = process.name,
+            category_name = self._name)
+        systematic_is_compatible = self._key_creator.matches_generic_systematic_key(  
+            tocheck = process.systematic_hist_name, 
+            process_name = process.name,
+            category_name = self._name)
+        return (nominal_is_compatible and systematic_is_compatible)
 
     def __str__(self):
         s = []
