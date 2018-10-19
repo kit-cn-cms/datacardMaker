@@ -153,22 +153,24 @@ class datacardMaker(object):
                     proc=processObject()
                     proc.name = process 
                     proc.category = category
-		    processtype = int(pt)
+                    processtype = int(pt)
                     for shapelines in self._shapelines_:
                         shape = shapelines.split()
                         if shape[2] == category or shape[2]=="*":
                             if shape[1] == "*":
-                                    proc.rootfile = shape[3]
-                                    proc.nominalhistname=shape[4]
-                                    proc.systname=shape[5]
-                                    #self._categories[category].default_file = shape[3]
-                                    #self._categories[category].generic_key_nominal_hist = shape[4]
-                                    #self._categories[category].generic_key_systematic_hist = shape[5]
+                                pass
+                                # proc.rootfile = shape[3]
+                                # proc.nominalhistname=shape[4]
+                                # proc.systname=shape[5]
+                                #self._categories[category].default_file = shape[3]
+                                #self._categories[category].generic_key_nominal_hist = shape[4]
+                                #self._categories[category].generic_key_systematic_hist = shape[5]
                             
                             if shape[1] == process:
-                                    proc.rootfile=shape[3]
-                                    proc.nominalhistname=shape[4]
-                                    proc.systname=shape[5]
+                                pass
+                                # proc.rootfile=shape[3]
+                                # proc.nominalhistname=shape[4]
+                                # proc.systname=shape[5]
                                         
                                          
                     if processtype >= 1:
@@ -178,13 +180,13 @@ class datacardMaker(object):
             
             #adds systematics to processes
             for systematics in self._systematics_:
-                 systematic = systematics.split()
-                 sys=systematic[0]
-                 typ=systematic[1]
-                 systematic.pop(1)
-                 systematic.pop(0)
-                 for value,process,category in zip(systematic,processes,binprocesses):
-                     if value!="-":
+                systematic = systematics.split()
+                sys=systematic[0]
+                typ=systematic[1]
+                systematic.pop(1)
+                systematic.pop(0)
+                for value,process,category in zip(systematic,processes,binprocesses):
+                    if value!="-":
                         self._categories[category][process].add_uncertainty(sys,typ,value)
             
              
@@ -212,13 +214,14 @@ class datacardMaker(object):
         Loop over all process in the dictionary 'process_dict' and save
         the respective systematic uncertainties and correlations
         """
-        for process in process_dict:
+        for process_name in process_dict:
+            process = process_dict[process_name]
             for syst in process.uncertainties:
                 #first, check if uncertainty is already known
                 #if not, create new systematicsObject
                 if not syst in self._systematics:
                     self._systematics[syst] = systematicObject(name = syst,
-                                    nature = process.get_uncertainty_type())
+                                    nature = process.get_uncertainty_type(syst))
                 self._systematics[syst].add_process(process = process)
 
 

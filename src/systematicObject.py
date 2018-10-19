@@ -18,7 +18,7 @@ class systematicObject(object):
         self._type = ""
         self._dic = {}
     def __init__(self, name=None, nature=None, dic = None):
-        
+        self.init_variables()
         if not name is None:
             try:
                 self._name     = str(name)
@@ -57,41 +57,41 @@ class systematicObject(object):
         except ValueError:
             print "Could not cast 'type' into a string! 'type' not set"
     
-    def add_process(self, category, procname, value):
-        if not category in self._dic:
-            self._dic[category] = {}
-        if not procname in self._dic[category]:
+    def add_process_raw(self, category_name, process_name, value):
+        if not category_name in self._dic:
+            self._dic[category_name] = {}
+        if not process_name in self._dic[category_name]:
             if self.helper.is_good_systval(value):
-                self._dic[category][procname] = value
+                self._dic[category_name][process_name] = value
         else:
-            temp = "ERROR: process '%s'" % procname
+            temp = "ERROR: process '%s'" % process_name
             temp += " in category '%s'" % category
             temp += " is already known to systematic '%s'!" % self._name
             temp += " Use 'processObject.set_correlation()' instead"
             print temp
         
-    def add_process(self, dic, category):
-        if not category in self._dic:
+    def add_process_by_dictionary(self, dic, category):
+        if not category_name in self._dic:
             if dic and isinstance(dic, dict):
                 if all(self.helper.is_good_systval(dic[key]) for key in dic):
-                    self._dic[category] += dic
+                    self._dic[category_name] += dic
                 else:
                     print "ERROR: input dictionary contains bad values!"
             else:
                 print "Could not add process: input must be dictionary!"
         else:
-            temp = "ERROR: category '%s'" % category
+            temp = "ERROR: category '%s'" % category_name
             temp += " is unknowns to systematic '%s'" % self._name
             print temp
     
     def add_process(self, process, correlation = "-"):
         if isinstance(process, processObject):
-            cor = self.get_correlation(process.category, process.name)
+            cor = self.get_correlation(process = process)
             if cor == "-":
                 if correlation == "-":
                     correlation = process.get_uncertainty_value(systname = self._name)
-                self.add_process(   category = process.category, 
-                                    procname = process.name, 
+                self.add_process_raw(   category_name = process.category, 
+                                    process_name = process.name, 
                                     value = correlation)
             else:
                 temp = "process '%s' is already known to " % process.name
@@ -101,41 +101,42 @@ class systematicObject(object):
         else:
             print "ERROR: Could not add process - input must be processObject"
 
-    def get_correlation(self, category, procname):
-        if category in self._dic:
-            if procname in self._dic[category]:
-                return str(self._dic[category][procname])
+    def get_correlation_raw(self, category_name, process_name):
+        if category_name in self._dic:
+            if process_name in self._dic[category_name]:
+                return str(self._dic[category_name][process_name])
             else:
                 return "-"
 
     def get_correlation(self, process):
         category = process.category
-        procname = process.name
-        return self.get_correlation(category = category, procname = procname)
+        process_name = process.name
+        return self.get_correlation_raw(    category_name = category, 
+                                        process_name = process_name)
 
-    def set_correlation(self, category, procname, value):
-        if category in self._dic:
-            if procname in self._dic[category]:
+    def set_correlation_raw(self, category_name, process_name, value):
+        if category_name in self._dic:
+            if process_name in self._dic[category_name]:
                 if self.helper.is_good_systval(value):
-                    self._dic[category][procname] = value
+                    self._dic[category_name][process_name] = value
             else:
                 print "Could not add process: input must be dictionary!"
         else:
-            temp = "ERROR: category '%s'" % category
+            temp = "ERROR: category '%s'" % category_name
             temp += " is unknown to systematic '%s'" % self._name
             print temp
 
     def set_correlation(self, process, value = "-"):
         if isinstance(process, processObject):
-            procname = process.name
+            process_name = process.name
             category = process.category
             if value == "-":
                 value = process.get_uncertainty_value(systname = self._name)
-            if procname in self._dic[category]:
+            if process_name in self._dic[category]:
                 if self.helper.is_good_systval(value):
-                    self._dic[category][procname] = value
+                    self._dic[category][process_name] = value
             else:
-                s = "ERROR: Process '%s' is not known yet to" % procname
+                s = "ERROR: Process '%s' is not known yet to" % process_name
                 s += " systematic '%s'!" % self._name
                 s += " Please use 'systematicObject.add_process' instead"
                 print s

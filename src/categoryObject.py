@@ -136,16 +136,11 @@ class categoryObject(object):
     def default_file(self):
         return self._default_file
     @default_file.setter
-    def default_file(self, path):
-        if path.exists(path):
-            self._default_file = path
+    def default_file(self, filepath):
+        if path.exists(filepath):
+            self._default_file = filepath
         else:
-            print "ERROR: File '%s' does not exist!" % path
-
-    
-
-
-    
+            print "ERROR: File '%s' does not exist!" % filepath
 
     def add_signal_process( self, name, rootfile = None, histoname = None, 
                             systkey = None):
