@@ -158,16 +158,18 @@ class datacardMaker(object):
                         if shape[2] == category or shape[2]=="*":
                             if shape[1] == "*":
                                     proc.rootfile = shape[3]
-                                    proc.nominalhistname=shape[4]
-                                    proc.systname=shape[5]
+                                    proc.nominal_hist_name=shape[4]
+                                    proc.systematic_hist_name=shape[5]
+                                    print shape [3]
+                                    print shape [4]
                                     #self._categories[category].default_file = shape[3]
                                     #self._categories[category].generic_key_nominal_hist = shape[4]
                                     #self._categories[category].generic_key_systematic_hist = shape[5]
                             
                             if shape[1] == process:
                                     proc.rootfile=shape[3]
-                                    proc.nominalhistname=shape[4]
-                                    proc.systname=shape[5]
+                                    proc.nominal_hist_name=shape[4]
+                                    proc.systematic_hist_name=shape[5]
                                         
                                          
                     if processtype >= 1:

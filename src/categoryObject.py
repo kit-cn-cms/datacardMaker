@@ -231,13 +231,19 @@ class categoryObject(object):
 
             
     def __getitem__(self, process):
-        for name,procobj in self._bkgprocs.items():
-            if name==process:
-                return procobj
-        for name,procobj in self._signalprocs.items():
-            if name==process:
-                return procobj
-            
+        #for name,procobj in self._bkgprocs.items():
+            #if name==process:
+                #return procobj
+        #for name,procobj in self._signalprocs.items():
+            #if name==process:
+                #return procobj
+         if process in self._bkgprocs:
+             return self._bkgprocs[process]
+         elif process in self._signalprocs:
+             return self._signalprocs[process]
+         else:
+             print "ERROR: Process not in Category"
+             
 
 
     def add_process_raw(self, dic, name, rootfile, histoname, systkey):
