@@ -1,4 +1,5 @@
 import sys
+import operator
 from os import path
 
 directory = path.abspath(path.realpath(path.dirname(__file__)))
@@ -384,31 +385,33 @@ class datacardMaker(object):
     	"""
     	sigprc=[]
     	bkgprc=[]
+    	self._process_index_= {}
     	for category in self._categories:
         	for process in self._categories[category]._bkgprocs:
         		if not process in self._processes:
-        			self._processes[process]={}
+        			self._processes[process]=[]
         			bkgprc.append(process)
-        			self._processes[process]["category"]=[]
-        		self._processes[process]["category"].append(category)
+        		if not category in self._processes[process]:
+        			self._processes[process].append(category)
 
         	for process in self._categories[category]._signalprocs:
         		if not process in self._processes:
-        			self._processes[process]={}
+        			self._processes[process]=[]
         			sigprc.append(process)
-        			self._processes[process]["category"]=[]
-        		self._processes[process]["category"].append(category)
+        		if not category in self._processes[process]:
+        			self._processes[process].append(category)
 
         #Calculates number for process (signal: <= 0, bkg: > 0)
         for n,sig in  enumerate(sigprc):
-        	self._processes[sig]["process_index"]=1+n-len(sigprc)
+        	self._process_index_[sig]=(1+n-len(sigprc))
         	print n
 
         for n,bkg in enumerate(bkgprc):
-        	self._processes[bkg]["process_index"]=1+n
+        	self._process_index_[bkg]=(1+n)
         	print n
 
-
+        
+        print self._process_index_
         print self._processes
 
     def create_process_block(self):
@@ -428,7 +431,37 @@ class datacardMaker(object):
                               THIS IS NOT PART OF THE DATACARD!
         """
         self.collect_processes()
+
+        indices=[]
+        for process in self._process_index_:
+        	indices.append(self._process_index_[process])
+        indices.sort()
+
+        
         lines = []
+        if len(self._processes) != 0:
+        	bins = "bin".ljust(15)
+        	process = "process".ljust(15)
+        	process_index = "process".ljust(15)
+        	rate = "rate".ljust(15)
+        	for category in self._categories:
+        		for index in indices:
+        			for proc,ind in self._process_index_.items():
+        				if index==ind and category in self._processes[proc]:
+	        				bins += "\t\t%s" % category.ljust(15)
+	        				process += "\t\t%s" % proc.ljust(15
+)	        				process_index += "\t\t%s" % index.ljust(15)
+	        				#rate += "\t\t%s" % self._categories[category][proc]._eventcount()
+	        lines.append(bins)
+        	lines.append(process)
+        	lines.append(process_index)
+        	lines.append(rate)
+        	
+       	else:
+       		print "WARNING: Did not find any processes!"
+
+       	return "\n".join(lines)
+
         
         		
 

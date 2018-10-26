@@ -152,7 +152,7 @@ class systematicObject(object):
         s.append("Systematic Name:\t%s" % self._name)
         s.append("Systematic Type:\t%s" % self._type)
         if len(self._dic) != 0:
-            s.append("\tlist of processes:")
+            s.append("list of processes:")
             temp = "\t\t%s" %  "category".ljust(15)
             temp += "\t\t%s" %  "process".ljust(15)
             temp += "\t%s" % "value".ljust(15)

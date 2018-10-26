@@ -1,4 +1,5 @@
 from datacardMaker import datacardMaker
+import operator
 
 d=datacardMaker()
 d.load_from_file("combinedtestdatacard.txt")
@@ -9,4 +10,4 @@ for name,category in d._categories.items():
 	d.update_systematics(category)
 for name,syst in d._systematics.items():
 	print syst
-d.collect_processes()
+print d.create_process_block()
