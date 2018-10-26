@@ -4,7 +4,6 @@ thisdir = path.realpath(path.dirname(__file__))
 basedir = path.join(thisdir, "base")
 if not basedir in spath:
     spath.append(basedir)
-from helperClass import helperClass
 
 if not thisdir in spath:
     spath.append(thisdir)
@@ -12,7 +11,6 @@ if not thisdir in spath:
 from processObject import processObject
 
 class systematicObject(object):
-    helper = helperClass()
     def init_variables(self):
         self._name = ""
         self._type = ""
@@ -61,8 +59,11 @@ class systematicObject(object):
         if not category_name in self._dic:
             self._dic[category_name] = {}
         if not process_name in self._dic[category_name]:
-            if self.helper.is_good_systval(value):
+            if True:
+            #if self.helper.is_good_systval(value):
+                self._dic[category_name][process_name] = {}
                 self._dic[category_name][process_name] = value
+            
         else:
             temp = "ERROR: process '%s'" % process_name
             temp += " in category '%s'" % category
@@ -86,7 +87,8 @@ class systematicObject(object):
     
     def add_process(self, process, correlation = "-"):
         if isinstance(process, processObject):
-            cor = self.get_correlation(process = process)
+            cor = correlation
+            #self.get_correlation(process = process) why?? 
             if cor == "-":
                 if correlation == "-":
                     correlation = process.get_uncertainty_value(systname = self._name)
@@ -117,7 +119,8 @@ class systematicObject(object):
     def set_correlation_raw(self, category_name, process_name, value):
         if category_name in self._dic:
             if process_name in self._dic[category_name]:
-                if self.helper.is_good_systval(value):
+                if True:
+                #if self.helper.is_good_systval(value):
                     self._dic[category_name][process_name] = value
             else:
                 print "Could not add process: input must be dictionary!"
@@ -133,7 +136,8 @@ class systematicObject(object):
             if value == "-":
                 value = process.get_uncertainty_value(systname = self._name)
             if process_name in self._dic[category]:
-                if self.helper.is_good_systval(value):
+                if True:
+                #if self.helper.is_good_systval(value):
                     self._dic[category][process_name] = value
             else:
                 s = "ERROR: Process '%s' is not known yet to" % process_name
@@ -143,3 +147,22 @@ class systematicObject(object):
         else:
             s = "ERROR: Could not set process! Input must be processObject"
     
+    def __str__(self):
+        s = []
+        s.append("Systematic Name:\t%s" % self._name)
+        s.append("Systematic Type:\t%s" % self._type)
+        if len(self._dic) != 0:
+            s.append("\tlist of processes:")
+            temp = "\t\t%s" %  "category".ljust(15)
+            temp += "\t\t%s" %  "process".ljust(15)
+            temp += "\t%s" % "value".ljust(15)
+            s.append(temp)
+            s.append("\t\t"+"_"*len(temp.expandtabs()))
+        for category in self._dic:
+            for process in self._dic[category]:
+                temp = "\t\t%s" % category.ljust(15)
+                temp += "\t\t%s" % process.ljust(15)
+                temp += "\t%s" % str(self._dic[category][process]).ljust(10)
+                s.append(temp)
+
+        return "\n".join(s)    
