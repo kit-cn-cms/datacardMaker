@@ -16,6 +16,7 @@ class datacardMaker(object):
         self._bins              = ""
         self._observation       = ""
         self._categories        = {}
+        self._processes 		= {}
         self._systematics       = {}
         self._hardcode_numbers  = False
         self._replace_files     = False
@@ -209,6 +210,7 @@ class datacardMaker(object):
 
 
     def add_generic_keys(self,category_name,list_of_shapelines):
+    	#adds generic key for categories
         self._categories[category_name].default_file = list_of_shapelines[3]
         self._categories[category_name].generic_key_nominal_hist = list_of_shapelines[4]
         self._categories[category_name].generic_key_systematic_hist = list_of_shapelines[5]
@@ -216,7 +218,7 @@ class datacardMaker(object):
 
     def manage_processes(self, category_name, process_name, list_of_shapelines):
         """
-        Search process corresponding to shapeline and add the key names
+        Search process corresponding to shapeline and add the explicit key names
         """
         if process_name == "*":
             #for process in self._categories[category_name].processes():
@@ -375,6 +377,40 @@ class datacardMaker(object):
         """
         pass
 
+    def collect_processes(self):
+    	"""
+		Updates the list of all processes avaliable. Adds list of categories to process.
+		Finally updates process index (has to be the same for the same process independet of category)
+    	"""
+    	sigprc=[]
+    	bkgprc=[]
+    	for category in self._categories:
+        	for process in self._categories[category]._bkgprocs:
+        		if not process in self._processes:
+        			self._processes[process]={}
+        			bkgprc.append(process)
+        			self._processes[process]["category"]=[]
+        		self._processes[process]["category"].append(category)
+
+        	for process in self._categories[category]._signalprocs:
+        		if not process in self._processes:
+        			self._processes[process]={}
+        			sigprc.append(process)
+        			self._processes[process]["category"]=[]
+        		self._processes[process]["category"].append(category)
+
+        #Calculates number for process (signal: <= 0, bkg: > 0)
+        for n,sig in  enumerate(sigprc):
+        	self._processes[sig]["process_index"]=1+n-len(sigprc)
+        	print n
+
+        for n,bkg in enumerate(bkgprc):
+        	self._processes[bkg]["process_index"]=1+n
+        	print n
+
+
+        print self._processes
+
     def create_process_block(self):
         """
         Create the process block of the datacard. It has the following format:
@@ -391,7 +427,10 @@ class datacardMaker(object):
         (...)               - place holder for more categories
                               THIS IS NOT PART OF THE DATACARD!
         """
-        pass
+        self.collect_processes()
+        lines = []
+        
+        		
 
     def create_systematics_block(self):
         """
