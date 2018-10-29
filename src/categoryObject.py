@@ -253,12 +253,7 @@ class categoryObject(object):
         return (nominal_is_compatible and systematic_is_compatible)
 
     def __getitem__(self, process):
-        #for name,procobj in self._bkgprocs.items():
-            #if name==process:
-                #return procobj
-        #for name,procobj in self._signalprocs.items():
-            #if name==process:
-                #return procobj
+        
          if process in self._bkgprocs:
              return self._bkgprocs[process]
          elif process in self._signalprocs:
@@ -279,9 +274,6 @@ class categoryObject(object):
             return True
         else:
             return False
-
-    
-
 
 
     def __str__(self):

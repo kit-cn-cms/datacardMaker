@@ -17,12 +17,11 @@ class datacardMaker(object):
         self._bins              = ""
         self._observation       = ""
         self._categories        = {}
-        self._processes 		= {}
         self._systematics       = {}
         self._hardcode_numbers  = False
         self._replace_files     = False
         self._outputpath        = ""
-        self._block_separator   = "-"*130
+        self._block_separator   = "\n" + "-"*130 + "\n"
 
     def __init__(   self, pathToDatacard = "", 
                     processIdentifier = "$PROCESS",
@@ -378,41 +377,20 @@ class datacardMaker(object):
         """
         pass
 
-    def collect_processes(self):
-    	"""
-		Updates the list of all processes avaliable. Adds list of categories to process.
-		Finally updates process index (has to be the same for the same process independet of category)
-    	"""
-    	sigprc=[]
-    	bkgprc=[]
-    	self._process_index_= {}
-    	for category in self._categories:
-        	for process in self._categories[category]._bkgprocs:
-        		if not process in self._processes:
-        			self._processes[process]=[]
-        			bkgprc.append(process)
-        		if not category in self._processes[process]:
-        			self._processes[process].append(category)
 
-        	for process in self._categories[category]._signalprocs:
-        		if not process in self._processes:
-        			self._processes[process]=[]
-        			sigprc.append(process)
-        		if not category in self._processes[process]:
-        			self._processes[process].append(category)
+    
+    def get_signal_processes(self):
+    	#Overwriting for more than 1 category, only working when same processes for all categories
+        for category in self._categories:
+        	sigprc=sorted(self._categories[category]._signalprocs)
+      	return sigprc
 
-        #Calculates number for process (signal: <= 0, bkg: > 0)
-        for n,sig in  enumerate(sigprc):
-        	self._process_index_[sig]=(1+n-len(sigprc))
-        	print n
+    def get_bkg_processes(self):
+    	#Overwriting for more than 1 category, only working when same processes for all categories
+        for category in self._categories:
+        	bkgprc=sorted(self._categories[category]._bkgprocs)
+      	return bkgprc
 
-        for n,bkg in enumerate(bkgprc):
-        	self._process_index_[bkg]=(1+n)
-        	print n
-
-        
-        print self._process_index_
-        print self._processes
 
     def create_process_block(self):
         """
@@ -430,40 +408,53 @@ class datacardMaker(object):
         (...)               - place holder for more categories
                               THIS IS NOT PART OF THE DATACARD!
         """
-        self.collect_processes()
 
-        indices=[]
-        for process in self._process_index_:
-        	indices.append(self._process_index_[process])
-        indices.sort()
+        signalprocs=self.get_signal_processes()
+        bkgprocs=self.get_bkg_processes()
 
-        
         lines = []
-        if len(self._processes) != 0:
-        	bins = "bin".ljust(15)
-        	process = "process".ljust(15)
-        	process_index = "process".ljust(15)
-        	rate = "rate".ljust(15)
-        	for category in self._categories:
-        		for index in indices:
-        			for proc,ind in self._process_index_.items():
-        				if index==ind and category in self._processes[proc]:
-	        				bins += "\t\t%s" % category.ljust(15)
-	        				process += "\t\t%s" % proc.ljust(15
-)	        				process_index += "\t\t%s" % index.ljust(15)
-	        				#rate += "\t\t%s" % self._categories[category][proc]._eventcount()
-	        lines.append(bins)
-        	lines.append(process)
-        	lines.append(process_index)
-        	lines.append(rate)
-        	
-       	else:
-       		print "WARNING: Did not find any processes!"
+        #Leaves one bin empty, necessary for systematics block
+        bins = "bin".ljust(50)
+        process = "process".ljust(50)
+        process_index = "process".ljust(50)
+        rate = "rate".ljust(50)
 
-       	return "\n".join(lines)
+        for category in self._categories:
+        	#Signal processes first
+        	for number,signal_process in enumerate(signalprocs):
+
+        		bins += "%s" % category.ljust(25)
+ 	        	process += "%s" % signal_process.ljust(25)
+
+ 	        	index=1+number-len(self._categories[category]._signalprocs)
+	        	process_index += "%s" % str(index).ljust(25)
+
+ 	        	rate += "%s" % str(self._categories[category]._signalprocs[signal_process].eventcount).ljust(25)
+        	#Same with background processes	
+        	for number,bkg_process in enumerate(bkgprocs):
+        		bins += "%s" % category.ljust(25)
+ 	        	process += "%s" % bkg_process.ljust(25)
+
+ 	        	index=1+number
+	        	process_index += "%s" % str(index).ljust(25)
+	        	rate += "%s" % str(self._categories[category]._bkgprocs[bkg_process].eventcount).ljust(25)
+
+        lines.append(bins)
+        lines.append(process)
+        lines.append(process_index)
+        lines.append(rate)
+        return "\n".join(lines)
+        
 
         
-        		
+    def systematic_value(self,systematic,process,category):
+    	if category in self._systematics[systematic]._dic:
+    		if process in self._systematics[systematic]._dic[category]:
+    			return self._systematics[systematic]._dic[category][process]
+    		else:
+    			return "-"
+    	else:
+    		return "-"
 
     def create_systematics_block(self):
         """
@@ -480,7 +471,21 @@ class datacardMaker(object):
         IMPORTANT:  The order of process has to be the same as in the 
                     process block
         """
-        pass
+        signalprocs=self.get_signal_processes()
+        bkgprocs=self.get_bkg_processes()
+
+        lines = []
+        for systematic in self._systematics:
+        	temp="%s" % systematic.ljust(25)
+        	temp+="%s" % str(self._systematics[systematic].type).ljust(25)
+        	for category in self._categories:
+        		#Signal processes first
+        		for number,signal_process in enumerate(signalprocs):
+        			temp += "%s" % str(self.systematic_value(systematic=systematic, process=signal_process, category=category)).ljust(25)	
+        		for number,bkg_process in enumerate(bkgprocs):
+        			temp += "%s" % str(self.systematic_value(systematic=systematic, process=bkg_process, category=category)).ljust(25)
+        	lines.append(temp)
+       	return "\n".join(lines)
 
     def create_datacard_text(self):
         #create datacard header 
@@ -489,8 +494,9 @@ class datacardMaker(object):
             self.update_systematics(self._categories[cat])
         content.append(self.create_header())
         #create block with keywords for systematic variations
-
-        #create observation block
+        content.append(self.create_process_block())
+        content.append(self.create_systematics_block())
+        #create observation blockr
         return self._block_separator.join(content)
 
     def write_datacard(self):
