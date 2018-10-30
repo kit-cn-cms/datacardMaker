@@ -17,3 +17,9 @@ d.outputpath="test.txt"
 d.write_datacard()
 print d.create_observation_block()
 print d.create_keyword_block()
+
+c=datacardMaker()
+c.load_from_file("testdatacard.txt")
+c.replace_files=True
+c.outputpath="text2.txt"
+c.write_datacard()
