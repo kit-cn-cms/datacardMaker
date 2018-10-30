@@ -358,7 +358,7 @@ class datacardMaker(object):
         """
         lines = []
         for category in self._categories:
-            lines+=self.write_keyword_block_lines(category=self._categories[category]))
+            lines+=self.write_keyword_block_lines(category=self._categories[category])
         # for category in self._categories:
         #     if any(category in syst._dict and syst.type == "shape" for syst in self._systematics):
         #         lines += self.write_keyword_block_lines(category = self._categories[cat])
