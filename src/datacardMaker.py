@@ -331,11 +331,12 @@ class datacardMaker(object):
 
     def write_keyword_block_lines(self, category):
         lines = []
-        line = self.write_keyword_block_line(process_name = "*", 
-            category_name = category.name, file = category.default_file, 
-            nominal_key = category.generic_key_nominal_hist, 
-            syst_key = category.generic_key_systematic_hist)
-        print line
+        #line = self.write_keyword_block_line(process_name = "*", 
+        #    category_name = category.name, file = category.default_file, 
+        #    nominal_key = category.generic_key_nominal_hist, 
+        #    syst_key = category.generic_key_systematic_hist)
+
+        print category.name
         return line
 
     def write_keyword(self,category):
