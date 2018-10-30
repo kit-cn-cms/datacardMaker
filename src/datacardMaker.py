@@ -366,7 +366,8 @@ class datacardMaker(object):
         """
         lines = []
         for category in self._categories:
-            lines=(self.write_keyword(category=self._categories[category]))
+            lines=write_keyword_block_lines(category=category)
+            lines.extend(self.write_keyword(category=self._categories[category]))
         return "\n".join(lines)
         
 
