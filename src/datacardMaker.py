@@ -366,7 +366,7 @@ class datacardMaker(object):
         """
         lines = []
         for category in self._categories:
-            lines.extend(self.write_keyword(category=self._categories[category]))
+            lines=(self.write_keyword(category=self._categories[category]))
         print lines
         
 
