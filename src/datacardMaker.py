@@ -346,7 +346,7 @@ class datacardMaker(object):
         for process in category:
             file=category[process].file
             nominal_hist_name=category[process].nominal_hist_name
-            systematic_hist_name=ategory[process].systematic_hist_name
+            systematic_hist_name=category[process].systematic_hist_name
             if not file=="" and not nominal_hist_name=="" and not systematic_hist_name=="":
                 line.append(self.write_keyword_block_line(process_name=process,category_name=category.name,file=file,
                     nominal_key=nominal_hist_name,syst_key=systematic_hist_name))
