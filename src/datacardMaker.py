@@ -214,9 +214,6 @@ class datacardMaker(object):
     def add_generic_keys(self,category_name,list_of_shapelines):
     	#adds generic key for categories
         self._categories[category_name].default_file = list_of_shapelines[3]
-        print list_of_shapelines[3]
-        print list_of_shapelines[4]
-        print list_of_shapelines[5]
         self._categories[category_name].generic_key_nominal_hist = list_of_shapelines[4]
         self._categories[category_name].generic_key_systematic_hist = list_of_shapelines[5]
 
@@ -334,19 +331,16 @@ class datacardMaker(object):
         print s
         return s
 
-    def write_keyword_block_lines(self, category):
-        lines = []
-        #line = self.write_keyword_block_line(process_name = "*", 
-        #    category_name = category.name, file = category.default_file, 
-        #    nominal_key = category.generic_key_nominal_hist, 
-        #    syst_key = category.generic_key_systematic_hist)
+    def write_keyword_generic_lines(self, category):
+        
+        line = self.write_keyword_block_line(process_name = "*", 
+           category_name = category.name, file = category.default_file, 
+           nominal_key = category.generic_key_nominal_hist, 
+           syst_key = category.generic_key_systematic_hist)
 
-        print category.name
-        print category.default_file
-        print category.generic_key_nominal_hist
-        print category.generic_key_systematic_hist
+        return line
 
-    def write_keyword(self,category):
+    def write_keyword_process_lines(self,category):
         line=[]
         for process in category:
             line.append(self.write_keyword_block_line(process_name=process,category_name=category.name,file=category[process].file,
@@ -374,9 +368,8 @@ class datacardMaker(object):
         """
         lines = []
         for category in self._categories:
-            self.write_keyword_block_lines(category=self._categories[category])
-            #lines=self.write_keyword_block_lines(category=self._categories[category])
-            lines+=(self.write_keyword(category=self._categories[category]))
+            lines+=self.write_keyword_generic_lines(category=self._categories[category])
+            lines+=(self.write_keyword_process_lines(category=self._categories[category]))
         return "\n".join(lines)
         
 
