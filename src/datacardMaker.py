@@ -320,11 +320,11 @@ class datacardMaker(object):
     def write_keyword_block_line(self, process_name, category_name, file, 
                                     nominal_key, syst_key):
         s = "shapes".ljust(25)
-        s.+= "%s" % (process_name).ljust(25)
-        s.+= "%s" %(category_name).ljust(25)
-        s.+= "%s" %(file).ljust(25)
-        s.+= "%s" %(nominal_key).ljust(25)
-        s.+= "%s" %(syst_key).ljust(25)
+        s+= "%s" % (process_name).ljust(25)
+        s+= "%s" %(category_name).ljust(25)
+        s+= "%s" %(file).ljust(25)
+        s+= "%s" %(nominal_key).ljust(25)
+        s+= "%s" %(syst_key).ljust(25)
 
         print s
         return s
