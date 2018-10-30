@@ -322,9 +322,9 @@ class datacardMaker(object):
         s = "shapes".ljust(25)
         s+= "%s" % (process_name).ljust(25)
         s+= "%s" %(category_name).ljust(25)
-        s+= "%s" %(file).ljust(25)
-        s+= "%s" %(nominal_key).ljust(25)
-        s+= "%s" %(syst_key).ljust(25)
+        s+= "%s" %(file).ljust(100)
+        s+= "%s" %(nominal_key).ljust(100)
+        s+= "%s" %(syst_key).ljust(100)
 
         print s
         return s
@@ -366,7 +366,7 @@ class datacardMaker(object):
         """
         lines = []
         for category in self._categories:
-            lines.append(self.write_keyword(category=self._categories[category]))
+            lines.extend(self.write_keyword(category=self._categories[category]))
         print lines
         
 
