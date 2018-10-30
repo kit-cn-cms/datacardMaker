@@ -181,13 +181,15 @@ class datacardMaker(object):
                 process_name = shape[1]
                 if category_name=="*":
                     for category in self._categories:
-                        self.add_generic_keys(category_name=category,
-                            list_of_shapelines=shape)
+                        if process_name=="*":
+                            self.add_generic_keys(category_name=category,
+                                list_of_shapelines=shape)
                         self.manage_processes(category_name=category,
                          process_name=process_name,list_of_shapelines=shape)
                 elif category_name in self._categories:
-                    self.add_generic_keys(category_name=category,
-                        list_of_shapelines=shape)
+                    if process_name=="*":
+                        self.add_generic_keys(category_name=category,
+                            list_of_shapelines=shape)
                     self.manage_processes(category_name = category_name,
                          process_name=process_name,list_of_shapelines=shape)
 
@@ -371,7 +373,7 @@ class datacardMaker(object):
         for category in self._categories:
             self.write_keyword_block_lines(category=self._categories[category])
             #lines=self.write_keyword_block_lines(category=self._categories[category])
-            lines=(self.write_keyword(category=self._categories[category]))
+            lines+=(self.write_keyword(category=self._categories[category]))
         return "\n".join(lines)
         
 
