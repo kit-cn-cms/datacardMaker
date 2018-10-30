@@ -343,6 +343,7 @@ class datacardMaker(object):
         for process in category:
             lines.append(self.write_keyword_block_line(process_name=process,category_name=category.name,file=category[process].file,
                 nominal_key=category[process].nominal_hist_name,syst_key=category[process].systematic_hist_name))
+        return lines
             
 
 
@@ -365,8 +366,8 @@ class datacardMaker(object):
         """
         lines = []
         for category in self._categories:
-            lines+=self.write_keyword(category=self._categories[category])
-            print lines
+            lines.append(self.write_keyword(category=self._categories[category]))
+        print lines
         
 
     def create_observation_block(self):
