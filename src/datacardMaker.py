@@ -375,7 +375,33 @@ class datacardMaker(object):
         (...)               - place holder for more categories
                               THIS IS NOT PART OF THE DATACARD!
         """
-        pass
+        lines = []
+        bins = "bin".ljust(25)
+        observation = "observation".ljust(25)
+        for category in self._categories:
+            obs=0
+            value=True
+
+            bins += "%s" % category.ljust(25)
+            for process in self._categories[category]:
+                eventcount=self._categories[category][process].eventcount
+                if not eventcount==-1 and isinstance(eventcount, float):
+                    obs+=eventcount
+                else:
+                    value=False
+            if value:
+                observation += "%s" % obs.ljust(25)
+            else:
+                observation += "-1.0e+00".ljust(25)
+
+        lines.append(bins)
+        lines.append(observation)
+        
+        return "\n".join(lines)
+
+
+
+
 
 
     
