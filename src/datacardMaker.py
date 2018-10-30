@@ -390,13 +390,13 @@ class datacardMaker(object):
                 else:
                     value=False
             if value:
-                observation += "%s" % obs.ljust(25)
+                observation += "%s" % str(obs).ljust(25)
             else:
                 observation += "-1.0e+00".ljust(25)
 
         lines.append(bins)
         lines.append(observation)
-        
+
         return "\n".join(lines)
 
 
