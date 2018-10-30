@@ -296,7 +296,8 @@ class datacardMaker(object):
         ncats = "*"
         nprocs = "*"
         nsysts = "*"
-        if self._hardcode_numbers: 
+        if True:
+        #if self._hardcode_numbers: 
             #get number of categories
             if len(self._categories) != 0:
                 ncats = len(self._categories)
