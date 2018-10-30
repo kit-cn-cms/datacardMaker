@@ -187,8 +187,8 @@ class datacardMaker(object):
                         self.manage_processes(category_name=category,
                          process_name=process_name,list_of_shapelines=shape)
                 elif category_name in self._categories:
-                    if process_name=="*":
-                        self.add_generic_keys(category_name=category,
+                    if process_name == "*":
+                        self.add_generic_keys(category_name=category_name,
                             list_of_shapelines=shape)
                     self.manage_processes(category_name = category_name,
                          process_name=process_name,list_of_shapelines=shape)
