@@ -405,7 +405,7 @@ class datacardMaker(object):
             bins += "%s" % category.ljust(25)
             for process in self._categories[category]:
                 eventcount=self._categories[category][process].eventcount
-                if not eventcount==-1 and isinstance(eventcount, float):
+                if not eventcount==-1 and not eventcount =="-1" and isinstance(eventcount, float):
                     obs+=eventcount
                 else:
                     value=False
