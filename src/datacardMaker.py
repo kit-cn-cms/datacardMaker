@@ -319,13 +319,14 @@ class datacardMaker(object):
 
     def write_keyword_block_line(self, process_name, category_name, file, 
                                     nominal_key, syst_key):
-        s = ["shapes"]
-        s.append(process_name)
-        s.append(category_name)
-        s.append(file)
-        s.append(nominal_key)
-        s.append(syst_key)
+        s = "shapes".ljust(25)
+        s.+= "%s" % (process_name).ljust(25)
+        s.+= "%s" %(category_name).ljust(25)
+        s.+= "%s" %(file).ljust(25)
+        s.+= "%s" %(nominal_key).ljust(25)
+        s.+= "%s" %(syst_key).ljust(25)
 
+        print s
         return s
 
     def write_keyword_block_lines(self, category):
@@ -337,7 +338,12 @@ class datacardMaker(object):
         return line
         print line
 
-        
+    def write_keyword(self,category):
+        lines=[]
+        for process in self._categories[category]:
+            lines.append(self.write_keyword_block_line(process_name=process,category_name=category,file=self._categories[category][process].file,
+                nominal_key=self._categories[category][process].nominal_hist_name,syst_key=self._categories[category][process].systematic_hist_name))
+            
 
 
     def create_keyword_block(self):
@@ -361,10 +367,7 @@ class datacardMaker(object):
         for category in self._categories:
             lines+=self.write_keyword_block_lines(category=self._categories[category])
             print lines
-        # for category in self._categories:
-        #     if any(category in syst._dict and syst.type == "shape" for syst in self._systematics):
-        #         lines += self.write_keyword_block_lines(category = self._categories[cat])
-        #return "\n".join(lines)
+        
 
     def create_observation_block(self):
         """
