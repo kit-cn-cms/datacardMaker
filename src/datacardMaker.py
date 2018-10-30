@@ -367,7 +367,7 @@ class datacardMaker(object):
         lines = []
         for category in self._categories:
             lines=(self.write_keyword(category=self._categories[category]))
-        print lines
+        return "\n".join(lines)
         
 
     def create_observation_block(self):
