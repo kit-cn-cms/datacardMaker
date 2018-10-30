@@ -337,6 +337,9 @@ class datacardMaker(object):
         #    syst_key = category.generic_key_systematic_hist)
 
         print category.name
+        print category.default_file
+        print category.generic_key_nominal_hist
+        print category.generic_key_systematic_hist
 
     def write_keyword(self,category):
         line=[]
