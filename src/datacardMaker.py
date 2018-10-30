@@ -340,9 +340,9 @@ class datacardMaker(object):
 
     def write_keyword(self,category):
         lines=[]
-        for process in self._categories[category]:
-            lines.append(self.write_keyword_block_line(process_name=process,category_name=category,file=self._categories[category][process].file,
-                nominal_key=self._categories[category][process].nominal_hist_name,syst_key=self._categories[category][process].systematic_hist_name))
+        for process in category:
+            lines.append(self.write_keyword_block_line(process_name=process,category_name=category.name,file=category[process].file,
+                nominal_key=category[process].nominal_hist_name,syst_key=category[process].systematic_hist_name))
             
 
 
