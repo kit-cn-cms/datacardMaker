@@ -335,6 +335,7 @@ class datacardMaker(object):
             nominal_key = category.generic_key_nominal_hist, 
             syst_key = category.generic_key_systematic_hist)
         return line
+        print line
 
         
 
@@ -358,11 +359,12 @@ class datacardMaker(object):
         """
         lines = []
         for category in self._categories:
-            lines+=self.write_keyword_block_lines(category=self._categories[category]))
+            lines+=self.write_keyword_block_lines(category=self._categories[category])
+            print lines
         # for category in self._categories:
         #     if any(category in syst._dict and syst.type == "shape" for syst in self._systematics):
         #         lines += self.write_keyword_block_lines(category = self._categories[cat])
-        return "\n".join(lines)
+        #return "\n".join(lines)
 
     def create_observation_block(self):
         """
