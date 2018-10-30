@@ -214,6 +214,9 @@ class datacardMaker(object):
     def add_generic_keys(self,category_name,list_of_shapelines):
     	#adds generic key for categories
         self._categories[category_name].default_file = list_of_shapelines[3]
+        print list_of_shapelines[3]
+        print list_of_shapelines[4]
+        print list_of_shapelines[5]
         self._categories[category_name].generic_key_nominal_hist = list_of_shapelines[4]
         self._categories[category_name].generic_key_systematic_hist = list_of_shapelines[5]
 

@@ -10,10 +10,10 @@ for name,category in d._categories.items():
 	d.update_systematics(category)
 for name,syst in d._systematics.items():
 	print syst
-print d.create_process_block()
-print d.create_systematics_block()
+#print d.create_process_block()
+#print d.create_systematics_block()
 d.replace_files = True
 d.outputpath="test.txt"
-d.write_datacard()
+#d.write_datacard()
 print d.create_observation_block()
 print d.create_keyword_block()
