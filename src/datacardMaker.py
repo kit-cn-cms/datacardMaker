@@ -337,7 +337,6 @@ class datacardMaker(object):
         #    syst_key = category.generic_key_systematic_hist)
 
         print category.name
-        return line
 
     def write_keyword(self,category):
         lines=[]
