@@ -332,6 +332,9 @@ class datacardMaker(object):
         return s
 
     def write_keyword_generic_lines(self, category):
+        """
+        Adds the generic key 
+        """
         
         line = self.write_keyword_block_line(process_name = "*", 
            category_name = category.name, file = category.default_file, 
@@ -342,7 +345,9 @@ class datacardMaker(object):
 
     def write_keyword_process_lines(self,category):
         line=[]
+        #adds the generic key
         line.append(self.write_keyword_generic_lines(category=category))
+        #adds the process keys (need to add: only add process key if it doesnt match the generic key)
         for process in category:
             file=category[process].file
             nominal_hist_name=category[process].nominal_hist_name
@@ -531,12 +536,13 @@ class datacardMaker(object):
             self.update_systematics(self._categories[cat])
         content.append(self.create_header())
         #create keyword block
-
+        content.append(self.create_keyword_block())
+        #create observation block
+        content.append(self.create_observation_block())
         #create block with keywords for systematic variations
         content.append(self.create_process_block())
         content.append(self.create_systematics_block())
-        #create observation blockr
-        content.append(self.create_observation_block())
+        
         return self._block_separator.join(content)
 
     def write_datacard(self):
