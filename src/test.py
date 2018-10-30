@@ -16,3 +16,4 @@ d.replace_files = True
 d.outputpath="test.txt"
 d.write_datacard()
 print d.create_observation_block()
+print d.create_keyword_block()

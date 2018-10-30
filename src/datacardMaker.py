@@ -278,7 +278,6 @@ class datacardMaker(object):
             
 
 
-
     def create_header(self):
         """
         Create header for the datacard. The header has the following form:
@@ -357,9 +356,11 @@ class datacardMaker(object):
                               and/or '$PROCESS'
         """
         lines = []
-        for cat in self._categories:
-            if any(cat in syst._dict and syst.type == "shape" for syst in self._systematics):
-                lines += self.write_keyword_block_lines(category = self._categories[cat])
+        for category in self._categories:
+            lines.append(self.write_keyword_block_lines(category=self._categories[category]))
+        # for category in self._categories:
+        #     if any(category in syst._dict and syst.type == "shape" for syst in self._systematics):
+        #         lines += self.write_keyword_block_lines(category = self._categories[cat])
         return "\n".join(lines)
 
     def create_observation_block(self):
@@ -398,10 +399,6 @@ class datacardMaker(object):
         lines.append(observation)
 
         return "\n".join(lines)
-
-
-
-
 
 
     
@@ -519,10 +516,13 @@ class datacardMaker(object):
         for cat in self._categories:
             self.update_systematics(self._categories[cat])
         content.append(self.create_header())
+        #create keyword block
+
         #create block with keywords for systematic variations
         content.append(self.create_process_block())
         content.append(self.create_systematics_block())
         #create observation blockr
+        content.append(self.create_observation_block())
         return self._block_separator.join(content)
 
     def write_datacard(self):
