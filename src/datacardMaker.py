@@ -342,9 +342,14 @@ class datacardMaker(object):
 
     def write_keyword_process_lines(self,category):
         line=[]
+        line.append(self.write_keyword_generic_lines(category=category))
         for process in category:
-            line.append(self.write_keyword_block_line(process_name=process,category_name=category.name,file=category[process].file,
-                nominal_key=category[process].nominal_hist_name,syst_key=category[process].systematic_hist_name))
+            file=category[process].file
+            nominal_hist_name=category[process].nominal_hist_name
+            systematic_hist_name=ategory[process].systematic_hist_name
+            if not file=="" and not nominal_hist_name=="" and not systematic_hist_name=="":
+                line.append(self.write_keyword_block_line(process_name=process,category_name=category.name,file=file,
+                    nominal_key=nominal_hist_name,syst_key=systematic_hist_name))
         return line
             
 
@@ -368,7 +373,6 @@ class datacardMaker(object):
         """
         lines = []
         for category in self._categories:
-            print self.write_keyword_generic_lines(category=self._categories[category])
             lines +=(self.write_keyword_process_lines(category=self._categories[category]))
         return "\n".join(lines)
         
