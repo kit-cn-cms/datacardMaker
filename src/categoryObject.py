@@ -228,14 +228,7 @@ class categoryObject(object):
             print "ERROR: Category can only contain processes!"
 
             
-    def __getitem__(self, process):
-        for name,procobj in self._bkgprocs.items():
-            if name==process:
-                return procobj
-        for name,procobj in self._signalprocs.items():
-            if name==process:
-                return procobj
-            
+                
 
 
     def add_process_raw(self, dic, name, rootfile, histoname, systkey):
@@ -258,6 +251,30 @@ class categoryObject(object):
             process_name = process.name,
             category_name = self._name)
         return (nominal_is_compatible and systematic_is_compatible)
+
+    def __getitem__(self, process):
+        
+         if process in self._bkgprocs:
+             return self._bkgprocs[process]
+         elif process in self._signalprocs:
+             return self._signalprocs[process]
+         else:
+             print "ERROR: Process not in Category!"
+
+    def __iter__(self):
+        all_processes={}
+        all_processes.update(self._bkgprocs)
+        all_processes.update(self._signalprocs)
+        return all_processes.__iter__()
+
+    def __contains__(self, processName):
+        if processName in self._bkgprocs:
+            return True
+        elif processName in self._signalprocs:
+            return True
+        else:
+            return False
+
 
     def __str__(self):
         s = []

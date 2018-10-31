@@ -31,7 +31,7 @@ class processObject(object):
 
     def __init__(   self, processName = None, pathToRootfile = None, 
                     nominal_hist_key = None, systematic_hist_key = None, 
-                    categoryname = None):
+                    categoryName = None):
         self.init_variables()
         if not processName is None:
             self._name              = processName
@@ -39,11 +39,11 @@ class processObject(object):
             self._file_handler.filepath = pathToRootfile
         if not nominal_hist_key is None:
             self._nominalhistname   = nominal_hist_key
-        if not categoryname is None:
-            self._categoryname      = categoryname
+        if not categoryName is None:
+            self._categoryname      = categoryName
         
-        if self._calculate_yield:
-            self._eventcount        = self.calculate_yield()
+        #if self._calculate_yield:
+        #    self._eventcount        = self.calculate_yield()
         if not systematic_hist_key is None:
             self._systkey = systematic_hist_key
         if self._debug:
@@ -57,7 +57,7 @@ class processObject(object):
         """
         y = -1
 
-        temp = _file_handler.get_integral(histname = self._nominalhistname)
+        temp = self._file_handler.get_integral(histname = self._nominalhistname)
         if temp:
             y = temp 
         return y
@@ -155,23 +155,29 @@ class processObject(object):
 
     @nominal_hist_name.setter
     def nominal_hist_name(self, hname):
-        
-        if self._file_handler.histogram_exists(histname = hname):
-            #following if statement should be redundand
-            if self._id_logic.is_allowed_key(hname): 
+        if self._id_logic.is_nongeneric_key(hname):
+            if self._file_handler.histogram_exists(histname = hname):
                 self._nominalhistname = hname
                 self._eventcount = self._file_handler.get_integral(hname)
         else:
-            s = "'%s' does not exist " % hname
-            s += "in '%s'" % self._file_handler.filepath
+            hist = self._id_logic.build_nominal_histo_name(process_name = self._name, base_key = hname)
+            if self._file_handler.histogram_exists(histname = hist):
+                self._nominalhistname = hist
+                self._eventcount = self._file_handler.get_integral(hist)
+        #else:
+        #    s = "'%s' does not exist " % hname
+        #    s += "in '%s'" % self._file_handler.filepath
 
     @property
     def systematic_hist_name(self):
         return self._systkey
     @systematic_hist_name.setter
     def systematic_hist_name(self, key):
-        if self._id_logic.is_allowed_key(key):
+        if self._id_logic.is_nongeneric_key(key):
             self._systkey = key
+        else:
+            systkey = self._id_logic.build_nominal_histo_name(process_name = self._name, base_key = key)
+            self._systkey = systkey
     
     @property
     def uncertainties(self):
@@ -190,6 +196,7 @@ class processObject(object):
         s.append("\tcategory:\t%s" % self.get_category())
         s.append("\trootfile:\t%s" % self._file_handler.filepath)
         s.append("\tnominal histname:\t%s" % self._nominalhistname)
+        s.append("\tsystematic histname:\t%s" % self._systkey)
         s.append("\tyield:\t{0}".format(self._eventcount))
         if len(self._uncertainties) != 0:
             s.append("\tlist of uncertainties:")

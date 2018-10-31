@@ -1,4 +1,5 @@
 import sys
+import operator
 from os import path
 
 directory = path.abspath(path.realpath(path.dirname(__file__)))
@@ -20,7 +21,7 @@ class datacardMaker(object):
         self._hardcode_numbers  = False
         self._replace_files     = False
         self._outputpath        = ""
-        self._block_separator   = "-"*130
+        self._block_separator   = "\n" + "-"*130 + "\n"
 
     def __init__(   self, pathToDatacard = "", 
                     processIdentifier = "$PROCESS",
@@ -100,8 +101,15 @@ class datacardMaker(object):
 
 
     def load_from_file(self, pathToDatacard):
+        """
+        Reads datacard from file. Creates categoryObjects for each category and
+        processObjects for the corresponding processes. 
+        Adds filename, nominal histname and systematic histname.
+        Adds systematics for corresponding processes.
+        """
         if path.exists(pathToDatacard):
             print "loading datacard from", pathToDatacard
+            #Read datacard from file.
             with open(pathToDatacard) as datacard:
                 lines = datacard.read().splitlines()
                 self._shapelines_ = []
@@ -110,6 +118,7 @@ class datacardMaker(object):
                 self._binprocesses_= ""
                 self._processtype_ = ""
                 for n, line in enumerate(lines):
+                    #missing lines for advanced datacards, only working for simple ones
                     if line.startswith("-"):
                             continue
                     elif line.startswith("Combination") or line.startswith("imax") or line.startswith("kmax") or line.startswith("jmax"):
@@ -132,7 +141,7 @@ class datacardMaker(object):
                     else:
                         self._systematics_.append(line)
             
-            #create categoryObject for each category
+            #Create categoryObject for each category
             bins=self._bins.split()
             bins.pop(0)
             for category in bins:
@@ -140,7 +149,8 @@ class datacardMaker(object):
                 self._categories[category].name = category
             
             
-            #create processObjects for each process in a category            
+            #Create processObjects for each process in a category 
+            #and add it to its correspoding categoryObjects           
             processes = self._processes_.split()
             processes.pop(0)
             binprocesses = self._binprocesses_.split()
@@ -148,36 +158,42 @@ class datacardMaker(object):
             processtypes = self._processtype_.split()
             processtypes.pop(0)
             
-            if len(processes)==len(binprocesses) and len(processes)==len(processtypes):
-                for process,category,pt in zip(processes,binprocesses,processtypes):
-                    proc=processObject()
-                    proc.name = process 
-                    proc.category = category
-                    processtype = int(pt)
-                    for shapelines in self._shapelines_:
-                        shape = shapelines.split()
-                        if shape[2] == category or shape[2]=="*":
-                            if shape[1] == "*":
-                                pass
-                                # proc.rootfile = shape[3]
-                                # proc.nominalhistname=shape[4]
-                                # proc.systname=shape[5]
-                                #self._categories[category].default_file = shape[3]
-                                #self._categories[category].generic_key_nominal_hist = shape[4]
-                                #self._categories[category].generic_key_systematic_hist = shape[5]
-                            
-                            if shape[1] == process:
-                                pass
-                                # proc.rootfile=shape[3]
-                                # proc.nominalhistname=shape[4]
-                                # proc.systname=shape[5]
-                                        
-                                         
-                    if processtype >= 1:
-                        self._categories[category].add_background_process(proc)
-                    else:
-                        self._categories[category].add_signal_process(proc)
-            
+            assert len(processes)==len(binprocesses) 
+            assert len(processes)==len(processtypes)
+            for process,category,pt in zip(processes,binprocesses,processtypes):
+
+                proc=processObject(processName=process, categoryName=category)
+                processtype = int(pt)
+                #checks if process is a background or signal process and 
+                #adds it to the categoryObject
+                if processtype >= 1:
+                    self._categories[category].add_background_process(proc)
+                else:
+                    self._categories[category].add_signal_process(proc)
+
+                    
+
+            #add filename, nominal histnam and systematic histname
+            #for processObjects and categoryObjects
+            for shapelines in self._shapelines_:
+                shape = shapelines.split()
+                category_name = shape[2]
+                process_name = shape[1]
+                if category_name=="*":
+                    for category in self._categories:
+                        if process_name=="*":
+                            self.add_generic_keys(category_name=category,
+                                list_of_shapelines=shape)
+                        self.manage_processes(category_name=category,
+                            process_name=process_name,list_of_shapelines=shape)
+                elif category_name in self._categories:
+                    if process_name == "*":
+                        self.add_generic_keys(category_name=category_name,
+                            list_of_shapelines=shape)
+                    self.manage_processes(category_name = category_name,
+                         process_name=process_name,list_of_shapelines=shape)
+
+
             #adds systematics to processes
             for systematics in self._systematics_:
                 systematic = systematics.split()
@@ -187,12 +203,42 @@ class datacardMaker(object):
                 systematic.pop(0)
                 for value,process,category in zip(systematic,processes,binprocesses):
                     if value!="-":
-                        self._categories[category][process].add_uncertainty(sys,typ,value)
+                        self._categories[category][process].add_uncertainty( syst = sys,
+                                                            typ = typ, value = value)
             
              
         else:
             print "could not load %s: no such file" % pathToDatacard
-    
+
+
+    def add_generic_keys(self,category_name,list_of_shapelines):
+    	#adds generic key for categories
+        self._categories[category_name].default_file = list_of_shapelines[3]
+        self._categories[category_name].generic_key_nominal_hist = list_of_shapelines[4]
+        self._categories[category_name].generic_key_systematic_hist = list_of_shapelines[5]
+
+
+    def manage_processes(self, category_name, process_name, list_of_shapelines):
+        """
+        Search process corresponding to shapeline and add the explicit key names
+        """
+        if process_name == "*":
+            for process in self._categories[category_name]:
+                self.add_keys(category_name=category_name,
+                    process_name=process,list_of_shapelines=list_of_shapelines)
+        elif process_name in self._categories[category_name]:
+            self.add_keys(category_name=category_name,
+                    process_name=process_name,list_of_shapelines=list_of_shapelines)
+
+
+    def add_keys(self, category_name,process_name,list_of_shapelines):
+        """
+        add filename, nominal key and systematic key to processObject
+        """
+        self._categories[category_name][process_name].file = list_of_shapelines[3]
+        self._categories[category_name][process_name].nominal_hist_name = list_of_shapelines[4]
+        self._categories[category_name][process_name].systematic_hist_name = list_of_shapelines[5]
+
     def get_number_of_procs(self):
         """
         Get number of processes. Returns 0 if some categories have different
@@ -232,7 +278,6 @@ class datacardMaker(object):
             
 
 
-
     def create_header(self):
         """
         Create header for the datacard. The header has the following form:
@@ -249,7 +294,8 @@ class datacardMaker(object):
         ncats = "*"
         nprocs = "*"
         nsysts = "*"
-        if self._hardcode_numbers: 
+        if True:
+        #if self._hardcode_numbers: 
             #get number of categories
             if len(self._categories) != 0:
                 ncats = len(self._categories)
@@ -274,23 +320,42 @@ class datacardMaker(object):
 
     def write_keyword_block_line(self, process_name, category_name, file, 
                                     nominal_key, syst_key):
-        s = ["shapes"]
-        s.append(process_name)
-        s.append(category_name)
-        s.append(file)
-        s.append(nominal_key)
-        s.append(syst_key)
+        s = "shapes".ljust(25)
+        s+= "%s" % (process_name).ljust(25)
+        s+= "%s" %(category_name).ljust(25)
+        s+= "%s" %(file).ljust(100)
+        s+= "%s" %(nominal_key).ljust(100)
+        s+= "%s" %(syst_key).ljust(100)
 
+        print s
         return s
 
-    def write_keyword_block_lines(self, category):
-        lines = []
-        line = self.write_keyword_block_line(process_name = "*", 
-            category_name = category.name, file = category.default_file, 
-            nominal_key = category.generic_key_nominal_hist, 
-            syst_key = category.generic_key_systematic_hist)
-
+    def write_keyword_generic_lines(self, category):
+        """
+        Adds the generic key 
+        """
         
+        line = self.write_keyword_block_line(process_name = "*", 
+           category_name = category.name, file = category.default_file, 
+           nominal_key = category.generic_key_nominal_hist, 
+           syst_key = category.generic_key_systematic_hist)
+
+        return line
+
+    def write_keyword_process_lines(self,category):
+        line=[]
+        #adds the generic key
+        line.append(self.write_keyword_generic_lines(category=category))
+        #adds the process keys (need to add: only add process key if it doesnt match the generic key)
+        for process in category:
+            file=category[process].file
+            nominal_hist_name=category[process].nominal_hist_name
+            systematic_hist_name=category[process].systematic_hist_name
+            if not file=="" and not nominal_hist_name=="" and not systematic_hist_name=="":
+                line.append(self.write_keyword_block_line(process_name=process,category_name=category.name,file=file,
+                    nominal_key=nominal_hist_name,syst_key=systematic_hist_name))
+        return line
+            
 
 
     def create_keyword_block(self):
@@ -311,10 +376,10 @@ class datacardMaker(object):
                               and/or '$PROCESS'
         """
         lines = []
-        for cat in self._categories:
-            if any(cat in syst._dict and syst.type == "shape" for syst in self._systematics):
-                lines += self.write_keyword_block_lines(category = self._categories[cat])
+        for category in self._categories:
+            lines +=(self.write_keyword_process_lines(category=self._categories[category]))
         return "\n".join(lines)
+        
 
     def create_observation_block(self):
         """
@@ -329,7 +394,44 @@ class datacardMaker(object):
         (...)               - place holder for more categories
                               THIS IS NOT PART OF THE DATACARD!
         """
-        pass
+        lines = []
+        bins = "bin".ljust(25)
+        observation = "observation".ljust(25)
+        for category in self._categories:
+            obs=0
+            value=True
+
+            bins += "%s" % category.ljust(25)
+            for process in self._categories[category]:
+                eventcount=self._categories[category][process].eventcount
+                if not eventcount==-1 and not eventcount =="-1" and isinstance(eventcount, float):
+                    obs+=eventcount
+                else:
+                    value=False
+            if value:
+                observation += "%s" % str(obs).ljust(25)
+            else:
+                observation += "-1.0e+00".ljust(25)
+
+        lines.append(bins)
+        lines.append(observation)
+
+        return "\n".join(lines)
+
+
+    
+    def get_signal_processes(self):
+    	#Overwriting for more than 1 category, only working when same processes for all categories
+        for category in self._categories:
+        	sigprc=sorted(self._categories[category]._signalprocs)
+      	return sigprc
+
+    def get_bkg_processes(self):
+    	#Overwriting for more than 1 category, only working when same processes for all categories
+        for category in self._categories:
+        	bkgprc=sorted(self._categories[category]._bkgprocs)
+      	return bkgprc
+
 
     def create_process_block(self):
         """
@@ -347,7 +449,53 @@ class datacardMaker(object):
         (...)               - place holder for more categories
                               THIS IS NOT PART OF THE DATACARD!
         """
-        pass
+
+        signalprocs=self.get_signal_processes()
+        bkgprocs=self.get_bkg_processes()
+
+        lines = []
+        #Leaves one bin empty, necessary for systematics block
+        bins = "bin".ljust(50)
+        process = "process".ljust(50)
+        process_index = "process".ljust(50)
+        rate = "rate".ljust(50)
+
+        for category in self._categories:
+        	#Signal processes first
+        	for number,signal_process in enumerate(signalprocs):
+
+        		bins += "%s" % category.ljust(25)
+ 	        	process += "%s" % signal_process.ljust(25)
+
+ 	        	index=1+number-len(self._categories[category]._signalprocs)
+	        	process_index += "%s" % str(index).ljust(25)
+
+ 	        	rate += "%s" % str(self._categories[category]._signalprocs[signal_process].eventcount).ljust(25)
+        	#Same with background processes	
+        	for number,bkg_process in enumerate(bkgprocs):
+        		bins += "%s" % category.ljust(25)
+ 	        	process += "%s" % bkg_process.ljust(25)
+
+ 	        	index=1+number
+	        	process_index += "%s" % str(index).ljust(25)
+	        	rate += "%s" % str(self._categories[category]._bkgprocs[bkg_process].eventcount).ljust(25)
+
+        lines.append(bins)
+        lines.append(process)
+        lines.append(process_index)
+        lines.append(rate)
+        return "\n".join(lines)
+        
+
+        
+    def systematic_value(self,systematic,process,category):
+    	if category in self._systematics[systematic]._dic:
+    		if process in self._systematics[systematic]._dic[category]:
+    			return self._systematics[systematic]._dic[category][process]
+    		else:
+    			return "-"
+    	else:
+    		return "-"
 
     def create_systematics_block(self):
         """
@@ -364,7 +512,21 @@ class datacardMaker(object):
         IMPORTANT:  The order of process has to be the same as in the 
                     process block
         """
-        pass
+        signalprocs=self.get_signal_processes()
+        bkgprocs=self.get_bkg_processes()
+
+        lines = []
+        for systematic in self._systematics:
+        	temp="%s" % systematic.ljust(25)
+        	temp+="%s" % str(self._systematics[systematic].type).ljust(25)
+        	for category in self._categories:
+        		#Signal processes first
+        		for number,signal_process in enumerate(signalprocs):
+        			temp += "%s" % str(self.systematic_value(systematic=systematic, process=signal_process, category=category)).ljust(25)	
+        		for number,bkg_process in enumerate(bkgprocs):
+        			temp += "%s" % str(self.systematic_value(systematic=systematic, process=bkg_process, category=category)).ljust(25)
+        	lines.append(temp)
+       	return "\n".join(lines)
 
     def create_datacard_text(self):
         #create datacard header 
@@ -372,9 +534,14 @@ class datacardMaker(object):
         for cat in self._categories:
             self.update_systematics(self._categories[cat])
         content.append(self.create_header())
-        #create block with keywords for systematic variations
-
+        #create keyword block
+        content.append(self.create_keyword_block())
         #create observation block
+        content.append(self.create_observation_block())
+        #create block with keywords for systematic variations
+        content.append(self.create_process_block())
+        content.append(self.create_systematics_block())
+        
         return self._block_separator.join(content)
 
     def write_datacard(self):

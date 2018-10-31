@@ -289,3 +289,9 @@ class identificationLogic(object):
         #     if not self._procIden in key:
         #         return True
         # return False
+
+    def is_nongeneric_key(self,key):
+        if not key is None and not key == "":
+            if not self._procIden in key:
+                return True
+        return False
