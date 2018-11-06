@@ -142,7 +142,7 @@ class categoryObject(object):
         else:
             print "ERROR: File '%s' does not exist!" % filepath
 
-    def add_signal_process( self, name, rootfile = None, histoname = None, 
+    def add_signal_process_raw( self, name, rootfile = None, histoname = None, 
                             systkey = None):
         """
         add a signal process. Calls function add_process with 
@@ -160,7 +160,7 @@ class categoryObject(object):
                             rootfile = rootfile, histoname = histoname,
                             systkey = systkey)      
     
-    def add_background_process( self, name, rootfile = None, 
+    def add_background_process_raw( self, name, rootfile = None, 
                                 histoname = None, systkey = None):
         """
         add a background process. Calls function add_process with 
@@ -234,7 +234,7 @@ class categoryObject(object):
     def add_process_raw(self, dic, name, rootfile, histoname, systkey):
         temp = processObject(processName = name, pathToRootfile = rootfile, 
                     nominal_hist_key = histoname, systematic_hist_key = systkey, 
-                    categoryname = self._name)
+                    categoryName = self._name)
         self.add_process(dic = dic, process = temp)
 
     def is_compatible_with_default(self, process):

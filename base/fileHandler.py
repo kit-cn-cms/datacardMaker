@@ -94,6 +94,8 @@ class fileHandler(object):
             else:
                 print ("WARNING: histogram '%s' does not exist in '%s'"
                         % (histname, file))
+        else:
+            print "ERROR: In fileHandler - file is not set!"
         return None
 
     def histogram_exists(self, histname):

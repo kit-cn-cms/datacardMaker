@@ -86,7 +86,7 @@ class identificationLogic(object):
             s+= " is not part of new systematics key '%s'!" % key
             print s
         if not self._chIden in key:
-            s = "WARNING: channel identification keyword '%s'" % self._procIden
+            s = "WARNING: channel identification keyword '%s'" % self._chIden
             s+= " is not part of new systematics key '%s'!" % key
             print s
         if not self._systIden in key:
