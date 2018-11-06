@@ -185,7 +185,7 @@ class datacardMaker(object):
                             self.add_generic_keys(category_name=category,
                                 list_of_shapelines=shape)
                         self.manage_processes(category_name=category,
-                         process_name=process_name,list_of_shapelines=shape)
+                            process_name=process_name,list_of_shapelines=shape)
                 elif category_name in self._categories:
                     if process_name == "*":
                         self.add_generic_keys(category_name=category_name,
@@ -223,11 +223,9 @@ class datacardMaker(object):
         Search process corresponding to shapeline and add the explicit key names
         """
         if process_name == "*":
-            #for process in self._categories[category_name].processes():
             for process in self._categories[category_name]:
                 self.add_keys(category_name=category_name,
                     process_name=process,list_of_shapelines=list_of_shapelines)
-        #elif process_name in self._categories[category_name].processes():
         elif process_name in self._categories[category_name]:
             self.add_keys(category_name=category_name,
                     process_name=process_name,list_of_shapelines=list_of_shapelines)
