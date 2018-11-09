@@ -1,18 +1,14 @@
 # datacardMaker
 repo for object-oriented datacard maker
 
-will use scripts in [Philip's base repository](https://gitlab.cern.ch/pkeicher/base) (better make it stand-alone?)
+Writes Datacards 
 
-Current ideas for structure
-
-- datacardMaker.py: Wrapper to automatically create data cards from category/process/systematic objects
-	- should be able to know how many categories are to be written (-> j parameter)
-	- should be able to know how many systematics are involved (-> k parameter)
-- processObject.py: object for process (e.g. ttH_hbb)
-	- process should know what systematics it has
-	- process should know the correlation to a given systematic
-- systematicObject.py: object for nuisance parameters (e.g. bgnorm_ttbarPlusBBbar)
-	- systematic should know which processes it affects
-	- systematic should know the correlation to a given process
-- categoryObject.py: object for categories
-	- a category has multiple processes with a number of systematic uncertainties
+Current structure:
+- src/datacardMaker.py: Wrapper to automatically create data cards from category/process/systematic objects
+- src/categoryObject.py: Object for categories that contains processes
+- src/processObject.py: Object for process (e.g. ttH_hbb), contains uncertainties corresponding to the process
+- src/systematicObject.py: object for nuisance parameters (e.g. bgnorm_ttbarPlusBBbar)
+- base/fileHandler.py: fileHandler class manages all access to files required for the analysis
+- base/identificationLogic: identificationLogic class is meant to handle all logic concerning
+    the key handling for the different categories required in datacards
+- base/valueConventions.py: checks if value is allowed for systematic
