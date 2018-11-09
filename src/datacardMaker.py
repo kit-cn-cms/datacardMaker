@@ -147,6 +147,9 @@ class datacardMaker(object):
             for category in bins:
                 self._categories[category] = categoryObject()
                 self._categories[category].name = category
+                if self._debug >= 50:
+                    print "initialized category", category
+                    print self._categories[category]
             
             
             #Create processObjects for each process in a category 
@@ -217,6 +220,18 @@ class datacardMaker(object):
         self._categories[category_name].generic_key_nominal_hist = list_of_shapelines[4]
         self._categories[category_name].generic_key_systematic_hist = list_of_shapelines[5]
 
+    def add_keys(self, category_name,process_name,list_of_shapelines):
+        """
+        add filename, nominal key and systematic key to processObject
+        """
+        process = self._categories[category_name][process_name]
+        # self._categories[category_name][process_name].file = list_of_shapelines[3]
+        # self._categories[category_name][process_name].nominal_hist_name = list_of_shapelines[4]
+        # self._categories[category_name][process_name].systematic_hist_name = list_of_shapelines[5]
+        process.file = list_of_shapelines[3]
+        process.nominal_hist_name = list_of_shapelines[4]
+        process.systematic_hist_name = list_of_shapelines[5]
+
 
     def manage_processes(self, category_name, process_name, list_of_shapelines):
         """
@@ -229,15 +244,11 @@ class datacardMaker(object):
         elif process_name in self._categories[category_name]:
             self.add_keys(category_name=category_name,
                     process_name=process_name,list_of_shapelines=list_of_shapelines)
+        else:
+            print "could not find process %s in category %s" % (process_name, category_name)
 
 
-    def add_keys(self, category_name,process_name,list_of_shapelines):
-        """
-        add filename, nominal key and systematic key to processObject
-        """
-        self._categories[category_name][process_name].file = list_of_shapelines[3]
-        self._categories[category_name][process_name].nominal_hist_name = list_of_shapelines[4]
-        self._categories[category_name][process_name].systematic_hist_name = list_of_shapelines[5]
+    
 
     def get_number_of_procs(self):
         """

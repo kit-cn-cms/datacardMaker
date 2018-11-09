@@ -8,7 +8,7 @@ from processObject import processObject
 from identificationLogic import identificationLogic
 
 class categoryObject(object):
-    _debug     = True
+    _debug     = 200
     def init_variables(self):
         self._name     = "categoryName"
         self._data_obs = None
@@ -113,6 +113,7 @@ class categoryObject(object):
     @property
     def background_processes(self):
         return self._bkgprocs
+
     
     @property
     def generic_key_nominal_hist(self):
@@ -221,6 +222,9 @@ class categoryObject(object):
                             
     def add_process(self, dic, process):
         if isinstance(process, processObject):
+            if self._debug >= 99:
+                print "DEBUG: adding process", process.name
+                print process
             if self._default_file is None:
                 self.default_file = process.file
             dic[process.name] = process
@@ -254,12 +258,12 @@ class categoryObject(object):
 
     def __getitem__(self, process):
         
-         if process in self._bkgprocs:
-             return self._bkgprocs[process]
-         elif process in self._signalprocs:
-             return self._signalprocs[process]
-         else:
-             print "ERROR: Process not in Category!"
+        if process in self._bkgprocs:
+            return self._bkgprocs[process]
+        elif process in self._signalprocs:
+            return self._signalprocs[process]
+        else:
+            print "ERROR: Process not in Category!"
 
     def __iter__(self):
         all_processes={}
@@ -279,6 +283,7 @@ class categoryObject(object):
     def __str__(self):
         s = []
         s.append("Category Name:\t%s" % self._name)
+        s.append("Default source file:\t%s" % self._default_file)
         s.append("List of signal processes:")
         for sig in self._signalprocs:
             s.append("\t%s" % self._signalprocs[sig])

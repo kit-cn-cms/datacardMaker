@@ -22,7 +22,7 @@ class identificationLogic(object):
                                      , e.g. $SYSTEMATIC
                                      (member variable: _systIden)
     """
-    _debug = 99
+    _debug = 1
     _allowed_dependencies = ["process", "channel"]
     def init_variables(self):
         """
@@ -137,7 +137,11 @@ class identificationLogic(object):
             return "" 
         if not channel_name == "" and not channel_name is None:
             if self._chIden in base_key:
-                return base_key.replace(self._chIden, channel_name)
+                s = base_key.replace(self._chIden, channel_name)
+                if self._debug >= 30:
+                    print "-"*130, "\nDEBUG: key after channel insertion:", s
+                    print "-"*130
+                return s
         return base_key
 
     def insert_process(self, process_name, base_key):
@@ -292,6 +296,6 @@ class identificationLogic(object):
 
     def is_nongeneric_key(self,key):
         if not key is None and not key == "":
-            if not self._procIden in key:
+            if not (self._procIden in key or self._chIden in key):
                 return True
         return False

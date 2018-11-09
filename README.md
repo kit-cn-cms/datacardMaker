@@ -1,7 +1,6 @@
 # datacardMaker
 repo for object-oriented datacard maker
 
-will use scripts in [Philip's base repository](https://gitlab.cern.ch/pkeicher/base) (better make it stand-alone?)
 
 Current ideas for structure
 
