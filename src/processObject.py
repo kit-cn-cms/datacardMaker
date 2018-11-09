@@ -4,7 +4,6 @@ thisdir = path.realpath(path.dirname(__file__))
 basedir = path.join(thisdir, "../base")
 if not basedir in spath:
     spath.append(basedir)
-from helperClass import helperClass
 from identificationLogic import identificationLogic
 from valueConventions import valueConventions
 from fileHandler import fileHandler

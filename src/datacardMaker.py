@@ -185,15 +185,15 @@ class datacardMaker(object):
                 if category_name=="*":
                     for category in self._categories:
                         if process_name=="*":
-                            self.add_generic_keys(category_name=category,
+                            self.load_from_file_add_generic_keys(category_name=category,
                                 list_of_shapelines=shape)
-                        self.manage_processes(category_name=category,
+                        self.load_from_file_manage_processes(category_name=category,
                             process_name=process_name,list_of_shapelines=shape)
                 elif category_name in self._categories:
                     if process_name == "*":
-                        self.add_generic_keys(category_name=category_name,
+                        self.load_from_file_add_generic_keys(category_name=category_name,
                             list_of_shapelines=shape)
-                    self.manage_processes(category_name = category_name,
+                    self.load_from_file_manage_processes(category_name = category_name,
                          process_name=process_name,list_of_shapelines=shape)
 
 
@@ -214,35 +214,33 @@ class datacardMaker(object):
             print "could not load %s: no such file" % pathToDatacard
 
 
-    def add_generic_keys(self,category_name,list_of_shapelines):
+    def load_from_file_add_generic_keys(self,category_name,list_of_shapelines):
     	#adds generic key for categories
-        self._categories[category_name].default_file = list_of_shapelines[3]
-        self._categories[category_name].generic_key_nominal_hist = list_of_shapelines[4]
-        self._categories[category_name].generic_key_systematic_hist = list_of_shapelines[5]
+        category=self._categories[category_name]
+        category.default_file = list_of_shapelines[3]
+        category.generic_key_nominal_hist = list_of_shapelines[4]
+        category.generic_key_systematic_hist = list_of_shapelines[5]
 
-    def add_keys(self, category_name,process_name,list_of_shapelines):
+    def load_from_file_add_keys(self, category_name,process_name,list_of_shapelines):
         """
         add filename, nominal key and systematic key to processObject
         """
         process = self._categories[category_name][process_name]
-        # self._categories[category_name][process_name].file = list_of_shapelines[3]
-        # self._categories[category_name][process_name].nominal_hist_name = list_of_shapelines[4]
-        # self._categories[category_name][process_name].systematic_hist_name = list_of_shapelines[5]
         process.file = list_of_shapelines[3]
         process.nominal_hist_name = list_of_shapelines[4]
         process.systematic_hist_name = list_of_shapelines[5]
 
 
-    def manage_processes(self, category_name, process_name, list_of_shapelines):
+    def load_from_file_manage_processes(self, category_name, process_name, list_of_shapelines):
         """
         Search process corresponding to shapeline and add the explicit key names
         """
         if process_name == "*":
             for process in self._categories[category_name]:
-                self.add_keys(category_name=category_name,
+                self.load_from_file_add_keys(category_name=category_name,
                     process_name=process,list_of_shapelines=list_of_shapelines)
         elif process_name in self._categories[category_name]:
-            self.add_keys(category_name=category_name,
+            self.load_from_file_add_keys(category_name=category_name,
                     process_name=process_name,list_of_shapelines=list_of_shapelines)
         else:
             print "could not find process %s in category %s" % (process_name, category_name)
