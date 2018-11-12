@@ -138,6 +138,8 @@ class datacardMaker(object):
                         pass
                     elif line.startswith("observation") or line.startswith("rate"):
                         pass
+                    elif "autoMCStats" in line:
+                        pass
                     else:
                         self._systematics_.append(line)
             
@@ -227,8 +229,8 @@ class datacardMaker(object):
         """
         process = self._categories[category_name][process_name]
         process.file = list_of_shapelines[3]
-        process.nominal_hist_name = list_of_shapelines[4]
-        process.systematic_hist_name = list_of_shapelines[5]
+        process.key_nominal_hist = list_of_shapelines[4]
+        process.key_systematic_hist = list_of_shapelines[5]
 
 
     def load_from_file_manage_processes(self, category_name, process_name, list_of_shapelines):
@@ -362,11 +364,11 @@ class datacardMaker(object):
         #adds the process keys (need to add: only add process key if it doesnt match the generic key)
         for process in category:
             file=category[process].file
-            nominal_hist_name=category[process].nominal_hist_name
-            systematic_hist_name=category[process].systematic_hist_name
-            if not file=="" and not nominal_hist_name=="" and not systematic_hist_name=="":
+            key_nominal_hist=category[process].key_nominal_hist
+            key_systematic_hist=category[process].key_systematic_hist
+            if not file=="" and not key_nominal_hist=="" and not key_systematic_hist=="":
                 line.append(self.write_keyword_block_line(process_name=process,category_name=category.name,file=file,
-                    nominal_key=nominal_hist_name,syst_key=systematic_hist_name,size=size,sizekeys=sizekeys))
+                    nominal_key=key_nominal_hist,syst_key=key_systematic_hist,size=size,sizekeys=sizekeys))
         return line
             
     def get_max_size_keys(self):
@@ -379,8 +381,8 @@ class datacardMaker(object):
             for process_name in category:
                 process=self._categories[category_name][process_name]
                 keynames.append(process.file)
-                keynames.append(process.nominal_hist_name)
-                keynames.append(process.systematic_hist_name)
+                keynames.append(process.key_nominal_hist)
+                keynames.append(process.key_systematic_hist)
         print keynames
         return len(max(keynames,key=len))
 
@@ -451,6 +453,7 @@ class datacardMaker(object):
                 s += " is not set! Will set it to -1 - this could cause a crash"
                 print s
                 observation.append("-1")
+
         size= self.get_max_size([bins,observation])
         size+=5
         scaled_bins = [x.ljust(size) for x in bins]

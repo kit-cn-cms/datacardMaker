@@ -166,25 +166,25 @@ class categoryObject(object):
         else:
             print "ERROR: File '%s' does not exist!" % filepath
 
-    def add_signal_process_raw( self, name, rootfile = None, histoname = None, 
+    def create_signal_process( self, processName, rootfile = None, histoname = None, 
                             systkey = None):
         """
         add a signal process. Calls function add_process with 
         list of signal processes
         """
-        self.add_process_raw(   dic = self._signalprocs, name = name,
+        self._signalprocs[processName]=self.create_process( processName = name,
                             rootfile = rootfile, histoname = histoname,
                             systkey = systkey)      
     
-    def add_background_process_raw( self, name, rootfile = None, 
+    def create_background_process( self, processName, rootfile = None, 
                                 histoname = None, systkey = None):
         """
         add a background process. Calls function add_process with 
         list of background processes
         """                           
-        self.add_process_raw(   dic = self._bkgprocs, name = name,
-                                rootfile = rootfile, histoname = histoname,
-                                systkey = systkey)
+        self._bkgprocs[processName]=self.create_process( processName = name,
+                            rootfile = rootfile, histoname = histoname,
+                            systkey = systkey) 
 
     def create_process(self, processName , rootfile = None, 
                                 histoname = None, systkey = None):
@@ -200,36 +200,7 @@ class categoryObject(object):
                             nominal_hist_key = histoname,
                             systematic_hist_key = systkey)
                             
-    # def add_process(self, dic, name, rootfile, 
-    #                 histoname = None, systkey = None
-    #                 ):
-    #     changedKey = False
-    #     if histoname is None:
-    #         histoname = self._nomkey
-    #     if systkey is None:
-    #         systkey = self._systkey  
-    #     if self._procIden in histoname:
-    #         print "WARNING:\tProcess identifier is still part of nominal histo key! Will replace it"
-    #         histoname = histoname.replace(self._procIden, name)
-    #     if self._chIden in histoname:
-    #         print "WARNING:\tChannel identifier is still part of nominal histo key! Will replace it"
-    #         histoname = histoname.replace(self._chIden, name)
-    #     if self._procIden in systkey:
-    #         print "WARNING:\tProcess identifier is still part of nominal histo key! Will replace it"
-    #         systkey = systkey.replace(self._procIden, name)
-    #     if self._chIden in systkey:
-    #         print "WARNING:\tChannel identifier is still part of nominal histo key! Will replace it"
-    #         systkey = systkey.replace(self._chIden, name)
-            
-    #     controlNomKey = self._nomkey.replace(self._procIden, name)
-    #     controlSysKey = self._systkey.replace(self._procIden, name)
-    #     if not (histoname == self._nomkey and systkey == self._systkey):
-    #         changedKey = True
-        
-    #     if name in dic:
-    #         print ""
 
-    #overloaded functions if input variable is a process
     def add_signal_process( self, process):
         """
         add a signal process. Calls function add_process with 
@@ -257,22 +228,17 @@ class categoryObject(object):
             print "ERROR: Category can only contain processes!"
 
 
-    def add_process_raw(self, dic, name, rootfile, histoname, systkey):
-        temp = create_process(process_name = name, rootfile = rootfile,
-                                histoname = histoname, systkey = systkey)
-        self.add_process(dic = dic, process = temp)
-
     def is_compatible_with_default(self, process):
         """
         check whether information for 'process' is compatible with default
         information for this category
         """
         nominal_is_compatible = self._key_creator.matches_generic_nominal_key(  
-            tocheck = process.nominal_hist_name, 
+            tocheck = process.key_nominal_hist, 
             process_name = process.name,
             category_name = self._name)
         systematic_is_compatible = self._key_creator.matches_generic_systematic_key(  
-            tocheck = process.systematic_hist_name, 
+            tocheck = process.key_systematic_hist, 
             process_name = process.name,
             category_name = self._name)
         return (nominal_is_compatible and systematic_is_compatible)
