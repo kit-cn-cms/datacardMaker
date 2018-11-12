@@ -117,6 +117,11 @@ class categoryObject(object):
             s+= "in category %s" % self._name
             print s
             self._data_obs = data_obs
+        elif isinstance(data_obs, str):
+            s = "Will generate observation with name '%s'" % data_obs
+            s+= " in category %s" % self._name
+            print s
+            self._data_obs = self.generate_process(process_name = data_obs)
         else:
             print "ERROR: Cannot add object of type %s as observation!" % type(data_obs)
     
@@ -164,14 +169,6 @@ class categoryObject(object):
         add a signal process. Calls function add_process with 
         list of signal processes
         """
-        if histoname is None:
-            histoname = self._key_creator.insert_process(process_name = name,
-                            base_key = self._key_creator.generic_nominal_key)
-        if systkey is None:
-            systkey = self._key_creator.insert_process(process_name = name,
-                        base_key = self._key_creator.generic_systematics_key)
-        if rootfile is None:
-            rootfile = self._default_file
         self.add_process_raw(   dic = self._signalprocs, name = name,
                             rootfile = rootfile, histoname = histoname,
                             systkey = systkey)      
@@ -181,15 +178,7 @@ class categoryObject(object):
         """
         add a background process. Calls function add_process with 
         list of background processes
-        """
-        if histoname is None:
-            histoname = self._key_creator.insert_process(process_name = name,
-                            base_key = self._key_creator.generic_nominal_key)
-        if systkey is None:
-            systkey = self._key_creator.insert_process(process_name = name,
-                        base_key = self._key_creator.generic_systematics_key)
-        if rootfile is None:
-            rootfile = self._default_file                           
+        """                           
         self.add_process_raw(   dic = self._bkgprocs, name = name,
                             rootfile = rootfile, histoname = histoname,
                             systkey = systkey)
@@ -250,14 +239,10 @@ class categoryObject(object):
         else:
             print "ERROR: Category can only contain processes!"
 
-            
-                
-
 
     def add_process_raw(self, dic, name, rootfile, histoname, systkey):
-        temp = processObject(processName = name, pathToRootfile = rootfile, 
-                    nominal_hist_key = histoname, systematic_hist_key = systkey, 
-                    categoryName = self._name)
+        temp = generate_process(process_name = name, rootfile = rootfile,
+                                histoname = histoname, systkey = systkey)
         self.add_process(dic = dic, process = temp)
 
     def is_compatible_with_default(self, process):
