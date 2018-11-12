@@ -214,6 +214,7 @@ class datacardMaker(object):
              
         else:
             print "could not load %s: no such file" % pathToDatacard
+    
 
 
     def load_from_file_add_generic_keys(self,category_name,list_of_shapelines):
@@ -539,16 +540,6 @@ class datacardMaker(object):
         return "\n".join(lines)
         
 
-        
-    def systematic_value(self,systematic,process,category):
-    	if category in self._systematics[systematic]._dic:
-    		if process in self._systematics[systematic]._dic[category]:
-    			return self._systematics[systematic]._dic[category][process]
-    		else:
-    			return "-"
-    	else:
-    		return "-"
-
     def get_max_size(self,liste):
         templiste=[]
         for element in liste:
@@ -584,9 +575,11 @@ class datacardMaker(object):
             for category in self._categories:
                 #Signal processes first
                 for number,signal_process in enumerate(signalprocs):
-                    temp += "%s" % str(self.systematic_value(systematic=systematic, process=signal_process, category=category)).ljust(size)   
+                    temp += "%s" % str(self._systematics[systematic].get_correlation_raw(process_name=signal_process,
+                                                                              category_name=category)).ljust(size)   
                 for number,bkg_process in enumerate(bkgprocs):
-                    temp += "%s" % str(self.systematic_value(systematic=systematic, process=bkg_process, category=category)).ljust(size)
+                    temp += "%s" % str(self._systematics[systematic].get_correlation_raw(process_name=bkg_process,
+                                                                             category_name=category)).ljust(size)
             lines.append(temp)
        	return "\n".join(lines)
 
