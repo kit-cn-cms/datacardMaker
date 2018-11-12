@@ -16,7 +16,7 @@ class processObject(object):
     
     def init_variables(self):
         self._name = ""
-        self._file = ""
+        self._file = None
         self._categoryname = ""
         self._nominalhistname = ""
         self._systkey = ""
@@ -33,16 +33,16 @@ class processObject(object):
         if not processName is None:
             self._name              = processName
         if not pathToRootfile is None:
-            self._file_handler.filepath = pathToRootfile
+            self.file = pathToRootfile
         if not nominal_hist_key is None:
-            self._nominalhistname   = nominal_hist_key
+            self.nominal_hist_name   = nominal_hist_key
         if not categoryName is None:
             self._categoryname      = categoryName
         
         #if self._calculate_yield:
         #    self._eventcount        = self.calculate_yield()
         if not systematic_hist_key is None:
-            self._systkey = systematic_hist_key
+            self.systematic_hist_name = systematic_hist_key
         if self._debug >= 3:
             s = "initialized process with name '%s'" % self._name
             s += " in category '%s'" % self._categoryname
