@@ -107,6 +107,21 @@ class categoryObject(object):
         self._name = val
 
     @property
+    def observation(self):
+        return self._data_obs
+
+    @observation.setter
+    def observation(self, data_obs):
+        if isinstance(data_obs, processObject):
+            s = "adding %s as observation " % data_obs.name
+            s+= "in category %s" % self._name
+            print s
+            self._data_obs = data_obs
+        else:
+            print "ERROR: Cannot add object of type %s as observation!" % type(data_obs)
+    
+
+    @property
     def signal_processes(self):
         return self._signalprocs
 
