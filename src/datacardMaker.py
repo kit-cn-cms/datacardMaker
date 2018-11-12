@@ -145,24 +145,24 @@ class datacardMaker(object):
             
             #Create categoryObject for each category
             #first cleanup lines
-            bins=self._bins.split()
-            bins.pop(0)
-            self.load_from_file_add_categories(list_of_categories= bins)
+            categories=self._bins.split()
+            categories.pop(0)
+            self.load_from_file_add_categories(list_of_categories= categories)
             
             #Create processObjects for each process in a category 
             #and add it to its correspoding categoryObjects 
             #first cleanup lines          
             processes = self._processes_.split()
             processes.pop(0)
-            binprocesses = self._binprocesses_.split()
-            binprocesses.pop(0) 
+            categoryprocesses = self._binprocesses_.split()
+            categoryprocesses.pop(0) 
             processtypes = self._processtype_.split()
             processtypes.pop(0)
             #checks if file is properly written
-            assert len(processes)==len(binprocesses) 
+            assert len(processes)==len(categoryprocesses) 
             assert len(processes)==len(processtypes)
             #add processes to categoryObjects
-            self.load_from_file_add_processes(list_of_categories=binprocesses,
+            self.load_from_file_add_processes(list_of_categories=categoryprocesses,
                 list_of_processes=processes, list_of_processtypes=processtypes)
 
             #add filename, nominal histnam and systematic histname
@@ -185,28 +185,77 @@ class datacardMaker(object):
         key logic wont be working cause channels will be numerated
         original name in Combination line
         """
+        for shapelines in self._shapelines_:
+            shape = shapelines.split()
+            category_name = shape[2]
+            process_name = shape[1]
+            if category_name=="*" and process_name=="*":
+                    for category in list_of_categories:
+                        self.load_from_file_add_category(list_of_filekeylines=shape,
+                                                categoryName=category)
+            elif category_name in list_of_categories and process_name== "*":
+                self.load_from_file_add_category(list_of_filekeylines=shape,
+                                            categoryName=category_name)
         for category in list_of_categories:
-                self._categories[category] = categoryObject()
-                self._categories[category].name = category
-                if self._debug >= 50:
-                    print "initialized category", category
-                    print self._categories[category]
+            if not category in self._categories:
+                self._categories[categoryName]=categoryObject(categoryName=category)
+        
 
-    def load_from_file_add_processes(self,list_of_processes,list_of_categories,
-                                        list_of_processtypes):
-        """
-        Adds empty processObject to categoryObject
-        """
-        for process,category,pt in zip(list_of_processes,list_of_categories,list_of_processtypes):
 
-                proc=processObject(processName=process, categoryName=category)
-                processtype = int(pt)
-                #checks if process is a background or signal process and 
-                #adds it to the categoryObject
-                if processtype >= 1:
-                    self._categories[category].add_background_process(proc)
+    def load_from_file_add_category(self,list_of_filekeylines,categoryName):
+        default_file = list_of_filekeylines[3]
+        generic_key_nominal_hist = list_of_filekeylines[4]
+        generic_key_systematic_hist = list_of_filekeylines[5]
+        self._categories[categoryName] = categoryObject(categoryName=categoryName,
+                        defaultRootFile=default_file,systkey=generic_key_systematic_hist,
+                        defaultnominalkey=generic_key_nominal_hist)
+        if self._debug >= 50:
+                    print "initialized category", categoryName
+                    print self._categories[categoryName]
+
+
+    def load_from_file_add_processes(self,list_of_processes,list_of_categories,list_of_processtypes):
+        for shapelines in self._shapelines_:
+            shape = shapelines.split()
+            category_name = shape[2]
+            process_name = shape[1]
+            if (category_name in list_of_categories) and (process_name in list_of_processes):
+                self.load_from_file_add_process(list_of_filekeylines=shape,categoryName=category_name,processName=process_name)
+            elif category_name==0 and process_name in list_of_processes:
+        for category,process,processtype in zip(list_of_categories,list_of_processes,list_of_processtypes):
+            if not process in self._categories[category]:
+                if processtype<=0:
+                    self._categories[category].create_signal_process(processName=process)
                 else:
-                    self._categories[category].add_signal_process(proc)
+                    self._categories[category].create_background_process(processName=process)
+
+
+    def load_from_file_add_process(self,list_of_filekeylines,categoryName,processName):
+        file = list_of_filekeylines[3]
+        key_nominal_hist = list_of_filekeylines[4]
+        key_systematic_hist = list_of_filekeylines[5]
+        self._categories[categoryName].create_process(processName=processName,
+                        rootfile=file,systkey=key_systematic_hist,
+                        histoname=key_nominal_hist)
+        if self._debug >= 50:
+                    print "initialized process", processName, "in category", categoryName
+                    print self._categories[categoryName]
+
+    # def load_from_file_add_processes_raw(self,list_of_processes,list_of_categories,
+    #                                     list_of_processtypes):
+    #     """
+    #     Adds empty processObject to categoryObject
+    #     """
+    #     for process,category,pt in zip(list_of_processes,list_of_categories,list_of_processtypes):
+
+    #             proc=processObject(processName=process, categoryName=category)
+    #             processtype = int(pt)
+    #             #checks if process is a background or signal process and 
+    #             #adds it to the categoryObject
+    #             if processtype >= 1:
+    #                 self._categories[category].add_background_process(proc)
+    #             else:
+    #                 self._categories[category].add_signal_process(proc)
 
     def load_from_file_add_file_and_keynames(self):
         for shapelines in self._shapelines_:
