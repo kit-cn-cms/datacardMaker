@@ -4,28 +4,25 @@ thisdir = path.realpath(path.dirname(__file__))
 basedir = path.join(thisdir, "../base")
 if not basedir in spath:
     spath.append(basedir)
-from helperClass import helperClass
 from identificationLogic import identificationLogic
 from valueConventions import valueConventions
 from fileHandler import fileHandler
 
 class processObject(object):
-    _helper = helperClass()
     _id_logic = identificationLogic()
     identificationLogic.belongs_to = "process"
     _value_rules = valueConventions()
     _file_handler = fileHandler()
-    _helper._debug = 99
     
     def init_variables(self):
         self._name = ""
-        # self._rootfile = ""
+        self._file = ""
         self._categoryname = ""
         self._nominalhistname = ""
         self._systkey = ""
         self._eventcount = -1
         self._uncertainties = {}
-        self._debug = True
+        self._debug = 100
         self._calculate_yield = False
 
 
@@ -46,7 +43,7 @@ class processObject(object):
         #    self._eventcount        = self.calculate_yield()
         if not systematic_hist_key is None:
             self._systkey = systematic_hist_key
-        if self._debug:
+        if self._debug >= 3:
             s = "initialized process with name '%s'" % self._name
             s += " in category '%s'" % self._categoryname
             print s
@@ -160,7 +157,8 @@ class processObject(object):
                 self._nominalhistname = hname
                 self._eventcount = self._file_handler.get_integral(hname)
         else:
-            hist = self._id_logic.build_nominal_histo_name(process_name = self._name, base_key = hname)
+            hist = self._id_logic.build_nominal_histo_name(process_name = self._name, base_key = hname, 
+                channel_name = self._categoryname)
             if self._file_handler.histogram_exists(histname = hist):
                 self._nominalhistname = hist
                 self._eventcount = self._file_handler.get_integral(hist)
@@ -176,7 +174,8 @@ class processObject(object):
         if self._id_logic.is_nongeneric_key(key):
             self._systkey = key
         else:
-            systkey = self._id_logic.build_nominal_histo_name(process_name = self._name, base_key = key)
+            systkey = self._id_logic.build_nominal_histo_name(process_name = self._name, base_key = key, 
+                channel_name = self._categoryname)
             self._systkey = systkey
     
     @property
