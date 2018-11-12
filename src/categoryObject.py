@@ -258,7 +258,7 @@ class categoryObject(object):
 
 
     def add_process_raw(self, dic, name, rootfile, histoname, systkey):
-        temp = create_process(process_name = name, rootfile = rootfile,
+        temp = self.create_process(processName = name, rootfile = rootfile,
                                 histoname = histoname, systkey = systkey)
         self.add_process(dic = dic, process = temp)
 
