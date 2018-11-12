@@ -404,27 +404,27 @@ class datacardMaker(object):
                               THIS IS NOT PART OF THE DATACARD!
         """
         lines = []
-        bins = "bin".ljust(25)
-        observation = "observation".ljust(25)
+        bins = ["bin"]
+        observation = ["observation"]
         for category in self._categories:
             obs=0
             value=True
 
-            bins += "%s" % category.ljust(25)
+            bins.append("%s" % category)
             data_obs = self._categories[category].observation
             if isinstance(data_obs, processObject):
                 if self._hardcode_numbers:
-                    observation += "-1".ljust(25)
+                    observation.append("-1")
                 else:
-                    observation += ("%s" % str(data_obs.eventcount)).ljust(25)
+                    observation.append("%s" % str(data_obs.eventcount))
             else:
                 s = "WARNING: observed data in category %s" % category
                 s += " is not set! Will set it to -1 - this could cause a crash"
                 print s
-                observation += "-1".ljust(25)
+                observation.append("-1")
 
-        lines.append(bins)
-        lines.append(observation)
+        lines.append(("".ljust(25)).join(bins))
+        lines.append(("".ljust(25)).join(observation))
 
         return "\n".join(lines)
 
