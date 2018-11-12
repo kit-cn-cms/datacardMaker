@@ -16,7 +16,7 @@ class processObject(object):
     
     def init_variables(self):
         self._name = ""
-        self._file = ""
+        self._file = None
         self._categoryname = ""
         self._nominalhistname = ""
         self._systkey = ""
@@ -33,16 +33,16 @@ class processObject(object):
         if not processName is None:
             self._name              = processName
         if not pathToRootfile is None:
-            self._file_handler.filepath = pathToRootfile
+            self.file = pathToRootfile
         if not nominal_hist_key is None:
-            self._nominalhistname   = nominal_hist_key
+            self.key_nominal_hist   = nominal_hist_key
         if not categoryName is None:
             self._categoryname      = categoryName
         
         #if self._calculate_yield:
         #    self._eventcount        = self.calculate_yield()
         if not systematic_hist_key is None:
-            self._systkey = systematic_hist_key
+            self.key_systematic_hist = systematic_hist_key
         if self._debug >= 3:
             s = "initialized process with name '%s'" % self._name
             s += " in category '%s'" % self._categoryname
@@ -147,11 +147,11 @@ class processObject(object):
             print "file '%s' does not exist!" % rootpath
 
     @property
-    def nominal_hist_name(self):
+    def key_nominal_hist(self):
         return self._nominalhistname
 
-    @nominal_hist_name.setter
-    def nominal_hist_name(self, hname):
+    @key_nominal_hist.setter
+    def key_nominal_hist(self, hname):
         if self._id_logic.is_nongeneric_key(hname):
             if self._file_handler.histogram_exists(histname = hname):
                 self._nominalhistname = hname
@@ -167,10 +167,10 @@ class processObject(object):
         #    s += "in '%s'" % self._file_handler.filepath
 
     @property
-    def systematic_hist_name(self):
+    def key_systematic_hist(self):
         return self._systkey
-    @systematic_hist_name.setter
-    def systematic_hist_name(self, key):
+    @key_systematic_hist.setter
+    def key_systematic_hist(self, key):
         if self._id_logic.is_nongeneric_key(key):
             self._systkey = key
         else:
@@ -247,31 +247,6 @@ class processObject(object):
             print s
         return False
 
-    # def add_uncertainty_from_systematicObject(self, systematic, value = None):
-    #     """
-    #     add an uncertainty to this process. This function checks
-    #     - whether there already is an entry for 'systname'
-    #     - the given value is suitable for a datacard (see 'is_good_systval')
-    #     and only adds the systematics if it's new and has a good value
-    #     """
-    #     if isinstance(systematic, systematicObject):
-    #         if not sysname in self._uncertainties:
-    #             if systematic.is_good_systval(value):
-    #                 cor = systematic.set_correlation(process = self)
-    #                 if cor == "-":
-    #                     systematic.add_process( process = self, 
-    #                                             correlation = value)
-    #                 else:
-    #                     systematic.set_correlation( process = self, 
-    #                                                 value = value)
-    #             self._uncertainties[sysname] = systematic
-
-    #         else:
-    #             temp = "There is already an entry for uncertainty " 
-    #             temp += "%s in process %s" % (systname, self.get_name())
-    #             print temp
-    #     else:
-    #         print "ERROR: systematic needs to be a systematicObject!"
 
     def set_uncertainty(self, systname, typ, value):
         """
@@ -312,12 +287,3 @@ class processObject(object):
         else:
 
             return ""
-
-    # def get_uncertainty(self, systname):
-    #     """
-    #     return systematicObject if there is one 
-    #     """
-    #     if systname in self._uncertainties:
-    #         return self._uncertainties[systname]
-    #     else:
-    #         return None
