@@ -328,18 +328,20 @@ class datacardMaker(object):
         return "\n".join(header)
 
     def write_keyword_block_line(self, process_name, category_name, file, 
-                                    nominal_key, syst_key):
-        s = "shapes".ljust(25)
-        s+= "%s" % (process_name).ljust(25)
-        s+= "%s" %(category_name).ljust(25)
-        s+= "%s" %(file).ljust(100)
-        s+= "%s" %(nominal_key).ljust(100)
-        s+= "%s" %(syst_key).ljust(100)
+                                    nominal_key, syst_key, size, sizekeys):
+        if size<11: 
+            size=11
+        s = "shapes".ljust(size)
+        s+= "%s" % (process_name).ljust(size)
+        s+= "%s" %(category_name).ljust(size)
+        s+= "%s" %(file).ljust(sizekeys)
+        s+= "%s" %(nominal_key).ljust(sizekeys)
+        s+= "%s" %(syst_key).ljust(sizekeys)
 
         print s
         return s
 
-    def write_keyword_generic_lines(self, category):
+    def write_keyword_generic_lines(self, category, size, sizekeys):
         """
         Adds the generic key 
         """
@@ -347,14 +349,16 @@ class datacardMaker(object):
         line = self.write_keyword_block_line(process_name = "*", 
            category_name = category.name, file = category.default_file, 
            nominal_key = category.generic_key_nominal_hist, 
-           syst_key = category.generic_key_systematic_hist)
+           syst_key = category.generic_key_systematic_hist, size=size, 
+           sizekeys=sizekeys)
 
         return line
 
-    def write_keyword_process_lines(self,category):
+    def write_keyword_process_lines(self,category,size,sizekeys):
         line=[]
+        
         #adds the generic key
-        line.append(self.write_keyword_generic_lines(category=category))
+        line.append(self.write_keyword_generic_lines(category=category,sizekeys=sizekeys,size=size))
         #adds the process keys (need to add: only add process key if it doesnt match the generic key)
         for process in category:
             file=category[process].file
@@ -362,9 +366,23 @@ class datacardMaker(object):
             systematic_hist_name=category[process].systematic_hist_name
             if not file=="" and not nominal_hist_name=="" and not systematic_hist_name=="":
                 line.append(self.write_keyword_block_line(process_name=process,category_name=category.name,file=file,
-                    nominal_key=nominal_hist_name,syst_key=systematic_hist_name))
+                    nominal_key=nominal_hist_name,syst_key=systematic_hist_name,size=size,sizekeys=sizekeys))
         return line
             
+    def get_max_size_keys(self):
+        keynames=[]
+        for category_name in self._categories:
+            category=self._categories[category_name]
+            keynames.append(category.default_file)
+            keynames.append(category.generic_key_nominal_hist)
+            keynames.append(category.generic_key_systematic_hist)
+            for process_name in category:
+                process=self._categories[category_name][process_name]
+                keynames.append(process.file)
+                keynames.append(process.nominal_hist_name)
+                keynames.append(process.systematic_hist_name)
+        print keynames
+        return len(max(keynames,key=len))
 
 
     def create_keyword_block(self):
@@ -384,9 +402,19 @@ class datacardMaker(object):
                               used before, this should contain '$CHANNEL' 
                               and/or '$PROCESS'
         """
+        size=self.get_max_size([self._categories,self.get_bkg_processes(),self.get_signal_processes()])
+        size+=5
+        sizekeys=self.get_max_size_keys()
+        sizekeys+=5
+        if self._debug>99:
+            print "DEBUGGING"
+            print "-".ljust(50)
+            print sizekeys 
+            print "-".ljust(50)
+
         lines = []
         for category in self._categories:
-            lines +=(self.write_keyword_process_lines(category=self._categories[category]))
+            lines +=(self.write_keyword_process_lines(category=self._categories[category],size=size,sizekeys=sizekeys))
         return "\n".join(lines)
         
 
@@ -403,6 +431,7 @@ class datacardMaker(object):
         (...)               - place holder for more categories
                               THIS IS NOT PART OF THE DATACARD!
         """
+        
         lines = []
         bins = ["bin"]
         observation = ["observation"]
@@ -422,9 +451,12 @@ class datacardMaker(object):
                 s += " is not set! Will set it to -1 - this could cause a crash"
                 print s
                 observation.append("-1")
-
-        lines.append(("".ljust(25)).join(bins))
-        lines.append(("".ljust(25)).join(observation))
+        size= self.get_max_size([bins,observation])
+        size+=5
+        scaled_bins = [x.ljust(size) for x in bins]
+        scaled_observation = [x.ljust(size) for x in observation]
+        lines.append("".join(scaled_bins))
+        lines.append("".join(scaled_observation))
 
         return "\n".join(lines)
 
@@ -463,37 +495,44 @@ class datacardMaker(object):
         signalprocs=self.get_signal_processes()
         bkgprocs=self.get_bkg_processes()
 
+        
         lines = []
         #Leaves one bin empty, necessary for systematics block
-        bins = "bin".ljust(50)
-        process = "process".ljust(50)
-        process_index = "process".ljust(50)
-        rate = "rate".ljust(50)
+        bins = ["bin",""]
+        process = ["process",""]
+        process_index = ["process",""]
+        rate = ["rate","" ]
 
         for category in self._categories:
         	#Signal processes first
         	for number,signal_process in enumerate(signalprocs):
 
-        		bins += "%s" % category.ljust(25)
- 	        	process += "%s" % signal_process.ljust(25)
+        		bins.append("%s" % category)
+ 	        	process.append("%s" % signal_process)
 
  	        	index=1+number-len(self._categories[category]._signalprocs)
-	        	process_index += "%s" % str(index).ljust(25)
+	        	process_index.append("%s" % str(index))
 
- 	        	rate += "%s" % str(self._categories[category]._signalprocs[signal_process].eventcount).ljust(25)
+ 	        	rate.append("%s" % str(self._categories[category]._signalprocs[signal_process].eventcount))
         	#Same with background processes	
         	for number,bkg_process in enumerate(bkgprocs):
-        		bins += "%s" % category.ljust(25)
- 	        	process += "%s" % bkg_process.ljust(25)
+        		bins.append("%s" % category)
+ 	        	process.append("%s" % bkg_process)
 
  	        	index=1+number
-	        	process_index += "%s" % str(index).ljust(25)
-	        	rate += "%s" % str(self._categories[category]._bkgprocs[bkg_process].eventcount).ljust(25)
+	        	process_index.append("%s" % str(index))
+	        	rate.append("%s" % str(self._categories[category]._bkgprocs[bkg_process].eventcount))
+        size=self.get_max_size([bins,process,self._systematics])
+        size+=5
 
-        lines.append(bins)
-        lines.append(process)
-        lines.append(process_index)
-        lines.append(rate)
+        scaled_bins = [x.ljust(size) for x in bins]
+        scaled_process = [x.ljust(size) for x in process]
+        scaled_process_index = [x.ljust(size) for x in process_index]
+        scaled_rate = [x.ljust(size) for x in rate]
+        lines.append("".join(scaled_bins))
+        lines.append("".join(scaled_process))
+        lines.append("".join(scaled_process_index))
+        lines.append("".join(scaled_rate))
         return "\n".join(lines)
         
 
@@ -506,6 +545,13 @@ class datacardMaker(object):
     			return "-"
     	else:
     		return "-"
+
+    def get_max_size(self,liste):
+        templiste=[]
+        for element in liste:
+            templiste.append(max(element,key=len))
+        return len(max(templiste,key=len))
+
 
     def create_systematics_block(self):
         """
@@ -525,17 +571,20 @@ class datacardMaker(object):
         signalprocs=self.get_signal_processes()
         bkgprocs=self.get_bkg_processes()
 
+        size=self.get_max_size([signalprocs,bkgprocs,self._systematics,self._categories])
+        size+=5
+
         lines = []
         for systematic in self._systematics:
-        	temp="%s" % systematic.ljust(25)
-        	temp+="%s" % str(self._systematics[systematic].type).ljust(25)
-        	for category in self._categories:
-        		#Signal processes first
-        		for number,signal_process in enumerate(signalprocs):
-        			temp += "%s" % str(self.systematic_value(systematic=systematic, process=signal_process, category=category)).ljust(25)	
-        		for number,bkg_process in enumerate(bkgprocs):
-        			temp += "%s" % str(self.systematic_value(systematic=systematic, process=bkg_process, category=category)).ljust(25)
-        	lines.append(temp)
+            temp="%s" % systematic.ljust(size)
+            temp+="%s" % str(self._systematics[systematic].type).ljust(size)
+            for category in self._categories:
+                #Signal processes first
+                for number,signal_process in enumerate(signalprocs):
+                    temp += "%s" % str(self.systematic_value(systematic=systematic, process=signal_process, category=category)).ljust(size)   
+                for number,bkg_process in enumerate(bkgprocs):
+                    temp += "%s" % str(self.systematic_value(systematic=systematic, process=bkg_process, category=category)).ljust(size)
+            lines.append(temp)
        	return "\n".join(lines)
 
     def create_datacard_text(self):
