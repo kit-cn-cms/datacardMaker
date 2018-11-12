@@ -423,8 +423,10 @@ class datacardMaker(object):
                 print s
                 observation.append("-1")
 
-        lines.append(("".ljust(25)).join(bins))
-        lines.append(("".ljust(25)).join(observation))
+        bins = [b.ljust(25) for b in bins]
+        observation = [o.ljust(25) for o in observation]
+        lines.append(" ".join(bins))
+        lines.append(" ".join(observation))
 
         return "\n".join(lines)
 
