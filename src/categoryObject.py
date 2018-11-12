@@ -46,12 +46,12 @@ class categoryObject(object):
         if not categoryName is None:
             self._name     = categoryName
         if not defaultnominalkey is None:
-            self._key_creator.generic_nominal_key = defaultnominalkey
+            self.generic_key_nominal_hist = defaultnominalkey
         if not systkey is None:
-            self._key_creator.generic_systematics_key = systkey
+            self.generic_key_systematic_hist = systkey
         if not defaultRootFile is None:
             if path.exists(defaultRootFile):
-                self._default_file = defaultRootFile
+                self.default_file = defaultRootFile
 
         
 
