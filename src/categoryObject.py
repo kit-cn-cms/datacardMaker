@@ -1,5 +1,7 @@
 from os import path
 import sys
+import csv
+import pandas
 directory = path.abspath(path.join(path.dirname("./"), "."))
 if not directory in sys.path:
     sys.path.append(directory)
@@ -156,6 +158,7 @@ class categoryObject(object):
     @property
     def default_file(self):
         return self._default_file
+
     @default_file.setter
     def default_file(self, filepath):
         if path.exists(filepath):
@@ -180,8 +183,22 @@ class categoryObject(object):
         list of background processes
         """                           
         self.add_process_raw(   dic = self._bkgprocs, name = name,
-                            rootfile = rootfile, histoname = histoname,
-                            systkey = systkey)
+                                rootfile = rootfile, histoname = histoname,
+                                systkey = systkey)
+
+    def create_process(self, processName , rootfile = None, 
+                                histoname = None, systkey = None):
+        categoryName=self.name
+        if histoname is None:
+            histoname = self.generic_key_nominal_hist
+        if systkey is None:
+            systkey = self.generic_key_systematic_hist
+        if rootfile is None:
+            rootfile = self.default_file                         
+        return processObject(processName=processName, categoryName=categoryName,
+                            pathToRootfile = rootfile, 
+                            nominal_hist_key = histoname,
+                            systematic_hist_key = systkey)
                             
     # def add_process(self, dic, name, rootfile, 
     #                 histoname = None, systkey = None
@@ -233,7 +250,7 @@ class categoryObject(object):
             if self._debug >= 99:
                 print "DEBUG: adding process", process.name
                 print process
-            if self._default_file is None:
+            if self.default_file is None:
                 self.default_file = process.file
             dic[process.name] = process
         else:
@@ -241,7 +258,7 @@ class categoryObject(object):
 
 
     def add_process_raw(self, dic, name, rootfile, histoname, systkey):
-        temp = generate_process(process_name = name, rootfile = rootfile,
+        temp = create_process(process_name = name, rootfile = rootfile,
                                 histoname = histoname, systkey = systkey)
         self.add_process(dic = dic, process = temp)
 
@@ -259,6 +276,33 @@ class categoryObject(object):
             process_name = process.name,
             category_name = self._name)
         return (nominal_is_compatible and systematic_is_compatible)
+
+
+    def add_from_csv(self,pathToFile,signaltag="ttH"):
+        with open(pathToFile, mode="r") as csv_file:
+            csv_reader = pandas.read_csv(pathToFile, skipinitialspace=True,)
+            processes=list(csv_reader)
+            #get rid of uncertainty and type entry to get processes
+            typ_label=processes[1]
+            processes.pop(1)
+            uncertainty_label=processes[0]
+            processes.pop(0)
+            for process in processes:
+                temp_process=self.create_process(processName=process)
+                for uncertainty,typ,value in zip(csv_reader[uncertainty_label],csv_reader[typ_label],csv_reader[process]):
+                    if "lumi" in uncertainty:
+                        value = 1.025
+                    elif "bgnorm" in uncertainty:
+                        value = 1.5
+                    temp_process.add_uncertainty(syst=uncertainty,typ=typ,value=value)
+                if signaltag in process:
+                    self.add_signal_process(temp_process)
+                else:
+                    self.add_background_process(temp_process)   
+
+
+
+
 
     def __getitem__(self, process):
         
