@@ -144,28 +144,60 @@ class datacardMaker(object):
                         self._systematics_.append(line)
             
             #Create categoryObject for each category
+            #first cleanup lines
             bins=self._bins.split()
             bins.pop(0)
-            for category in bins:
-                self._categories[category] = categoryObject()
-                self._categories[category].name = category
-                if self._debug >= 50:
-                    print "initialized category", category
-                    print self._categories[category]
-            
+            self.load_from_file_add_categories(list_of_categories= bins)
             
             #Create processObjects for each process in a category 
-            #and add it to its correspoding categoryObjects           
+            #and add it to its correspoding categoryObjects 
+            #first cleanup lines          
             processes = self._processes_.split()
             processes.pop(0)
             binprocesses = self._binprocesses_.split()
             binprocesses.pop(0) 
             processtypes = self._processtype_.split()
             processtypes.pop(0)
-            
+            #checks if file is properly written
             assert len(processes)==len(binprocesses) 
             assert len(processes)==len(processtypes)
-            for process,category,pt in zip(processes,binprocesses,processtypes):
+            #add processes to categoryObjects
+            self.load_from_file_add_processes(list_of_categories=binprocesses,
+                list_of_processes=processes, list_of_processtypes=processtypes)
+
+            #add filename, nominal histnam and systematic histname
+            #for processObjects and categoryObjects
+            self.load_from_file_add_file_and_keynames()
+
+
+            #adds systematics to processes
+            self.load_from_file_add_systematics(list_of_categories=binprocesses,
+                list_of_processes=processes )
+            
+             
+        else:
+            print "could not load %s: no such file" % pathToDatacard
+
+
+    def load_from_file_add_categories(self,list_of_categories):
+        """
+        Line for categories: careful with combined categories, 
+        key logic wont be working cause channels will be numerated
+        original name in Combination line
+        """
+        for category in list_of_categories:
+                self._categories[category] = categoryObject()
+                self._categories[category].name = category
+                if self._debug >= 50:
+                    print "initialized category", category
+                    print self._categories[category]
+
+    def load_from_file_add_processes(self,list_of_processes,list_of_categories,
+                                        list_of_processtypes):
+        """
+        Adds empty processObject to categoryObject
+        """
+        for process,category,pt in zip(list_of_processes,list_of_categories,list_of_processtypes):
 
                 proc=processObject(processName=process, categoryName=category)
                 processtype = int(pt)
@@ -176,11 +208,8 @@ class datacardMaker(object):
                 else:
                     self._categories[category].add_signal_process(proc)
 
-                    
-
-            #add filename, nominal histnam and systematic histname
-            #for processObjects and categoryObjects
-            for shapelines in self._shapelines_:
+    def load_from_file_add_file_and_keynames(self):
+        for shapelines in self._shapelines_:
                 shape = shapelines.split()
                 category_name = shape[2]
                 process_name = shape[1]
@@ -197,24 +226,6 @@ class datacardMaker(object):
                             list_of_shapelines=shape)
                     self.load_from_file_manage_processes(category_name = category_name,
                          process_name=process_name,list_of_shapelines=shape)
-
-
-            #adds systematics to processes
-            for systematics in self._systematics_:
-                systematic = systematics.split()
-                sys=systematic[0]
-                typ=systematic[1]
-                systematic.pop(1)
-                systematic.pop(0)
-                for value,process,category in zip(systematic,processes,binprocesses):
-                    if value!="-":
-                        self._categories[category][process].add_uncertainty( syst = sys,
-                                                            typ = typ, value = value)
-            
-             
-        else:
-            print "could not load %s: no such file" % pathToDatacard
-    
 
 
     def load_from_file_add_generic_keys(self,category_name,list_of_shapelines):
@@ -249,7 +260,21 @@ class datacardMaker(object):
             print "could not find process %s in category %s" % (process_name, category_name)
 
 
-    
+    def load_from_file_add_systematics(self,list_of_categories,list_of_processes):
+        """
+        One line for one systematic, knows type: adds systematic to process with 
+        value given in the file
+        """
+        for systematics in self._systematics_:
+                systematic = systematics.split()
+                sys=systematic[0]
+                typ=systematic[1]
+                systematic.pop(1)
+                systematic.pop(0)
+                for value,process,category in zip(systematic,list_of_processes,list_of_categories):
+                    if value!="-":
+                        self._categories[category][process].add_uncertainty( syst = sys,
+                                                            typ = typ, value = value)
 
     def get_number_of_procs(self):
         """
