@@ -411,16 +411,17 @@ class datacardMaker(object):
             value=True
 
             bins += "%s" % category.ljust(25)
-            for process in self._categories[category]:
-                eventcount=self._categories[category][process].eventcount
-                if not eventcount==-1 and not eventcount =="-1" and isinstance(eventcount, float):
-                    obs+=eventcount
+            data_obs = self._categories[category].observation
+            if isinstance(data_obs, processObject):
+                if self._hardcode_numbers:
+                    observation += "-1".ljust(25)
                 else:
-                    value=False
-            if value:
-                observation += "%s" % str(obs).ljust(25)
+                    observation += ("%s" % str(data_obs.eventcount)).ljust(25)
             else:
-                observation += "-1.0e+00".ljust(25)
+                s = "WARNING: observed data in category %s" % category
+                s += " is not set! Will set it to -1 - this could cause a crash"
+                print s
+                observation += "-1".ljust(25)
 
         lines.append(bins)
         lines.append(observation)

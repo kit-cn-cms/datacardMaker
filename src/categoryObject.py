@@ -183,9 +183,13 @@ class categoryObject(object):
         list of background processes
         """
         if histoname is None:
-            histoname = self._nomkey
+            histoname = self._key_creator.insert_process(process_name = name,
+                            base_key = self._key_creator.generic_nominal_key)
         if systkey is None:
-            systkey = self._systkey                            
+            systkey = self._key_creator.insert_process(process_name = name,
+                        base_key = self._key_creator.generic_systematics_key)
+        if rootfile is None:
+            rootfile = self._default_file                           
         self.add_process_raw(   dic = self._bkgprocs, name = name,
                             rootfile = rootfile, histoname = histoname,
                             systkey = systkey)
