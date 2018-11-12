@@ -1,5 +1,7 @@
 from os import path
 import sys
+import csv
+import pandas
 directory = path.abspath(path.join(path.dirname("./"), "."))
 if not directory in sys.path:
     sys.path.append(directory)
@@ -168,12 +170,35 @@ class categoryObject(object):
         list of background processes
         """
         if histoname is None:
-            histoname = self._nomkey
+            histoname = self._key_creator.insert_process(process_name = name,
+                            base_key = self._key_creator.generic_nominal_key)
         if systkey is None:
-            systkey = self._systkey                            
+            systkey = self._key_creator.insert_process(process_name = name,
+                        base_key = self._key_creator.generic_systematics_key)
+        if rootfile is None:
+            rootfile = self._default_file                         
         self.add_process_raw(   dic = self._bkgprocs, name = name,
                             rootfile = rootfile, histoname = histoname,
                             systkey = systkey)
+
+    def create_process_raw(self, processName):
+        return processObject(processName=processName, categoryName=self.name,
+                            pathToRootfile = self.default_file, nominal_hist_key = self.generic_key_nominal_hist,systematic_hist_key = self.generic_key_systematic_hist)
+
+
+    # def create_process(self, processName , rootfile = None, 
+    #                             histoname = None, systkey = None):
+    #     categoryName=self.name
+    #     if histoname is None:
+    #         histoname = self._key_creator.insert_process(process_name = processName,
+    #                         base_key = self._key_creator.generic_nominal_key)
+    #     if systkey is None:
+    #         systkey = self._key_creator.insert_process(process_name = processName,
+    #                     base_key = self._key_creator.generic_systematics_key)
+    #     if rootfile is None:
+    #         rootfile = self._default_file                         
+    #     return processObject(processName=processName, categoryName=categoryName,
+    #                         pathToRootfile = rootfile, nominal_hist_key = histoname,systematic_hist_key = systkey)
                             
     # def add_process(self, dic, name, rootfile, 
     #                 histoname = None, systkey = None
@@ -226,7 +251,7 @@ class categoryObject(object):
                 print "DEBUG: adding process", process.name
                 print process
             if self._default_file is None:
-                self.default_file = process.file
+                self._default_file = process.file
             dic[process.name] = process
         else:
             print "ERROR: Category can only contain processes!"
@@ -255,6 +280,33 @@ class categoryObject(object):
             process_name = process.name,
             category_name = self._name)
         return (nominal_is_compatible and systematic_is_compatible)
+
+
+    def add_from_csv(self,pathToFile,signaltag="ttH"):
+        with open(pathToFile, mode="r") as csv_file:
+            csv_reader = pandas.read_csv(pathToFile, skipinitialspace=True,)
+            processes=list(csv_reader)
+            #get rid of uncertainty and type entry to get processes
+            typ_label=processes[1]
+            processes.pop(1)
+            uncertainty_label=processes[0]
+            processes.pop(0)
+            for process in processes:
+                temp_process=self.create_process_raw(processName=process)
+                for uncertainty,typ,value in zip(csv_reader[uncertainty_label],csv_reader[typ_label],csv_reader[process]):
+                    if "lumi" in uncertainty:
+                        value = 1.025
+                    elif "bgnorm" in uncertainty:
+                        value = 1.5
+                    temp_process.add_uncertainty(syst=uncertainty,typ=typ,value=value)
+                if signaltag in process:
+                    self.add_signal_process(temp_process)
+                else:
+                    self.add_background_process(temp_process)   
+
+
+
+
 
     def __getitem__(self, process):
         
