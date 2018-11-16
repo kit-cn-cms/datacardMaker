@@ -242,6 +242,14 @@ class categoryObject(object):
         else:
             print "ERROR: Category can only contain processes!"
 
+    def delete_process(self,processName):
+        if processName in self._signalprocs:
+            del self._signalprocs[processName]
+        elif processName in self._bkgprocs:
+            del self._bkgprocs[processName]
+        if self._debug>30:
+            print "DEBUG: deleted process %s" % processName
+
 
     def is_compatible_with_default(self, process):
         """
