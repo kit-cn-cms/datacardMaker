@@ -250,6 +250,10 @@ class categoryObject(object):
         if self._debug>30:
             print "DEBUG: deleted process %s" % processName
 
+    def delete_processes(self,list_of_processes):
+        for process in list_of_processes:
+            self.delete_process(processName=process)
+
 
     def is_compatible_with_default(self, process):
         """
