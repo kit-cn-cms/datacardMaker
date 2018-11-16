@@ -188,36 +188,7 @@ class processObject(object):
     @property
     def uncertainties(self):
         return list(self._uncertainties.keys())
-
-    def __str__(self):
-        """
-        current setup: print delivers:
-            - process name
-            - process yield
-            - list of nuisance parameters
-        """
-        s = []
-        s.append("Process infos:")
-        s.append("\tname:\t%s" % self.get_name())
-        s.append("\tcategory:\t%s" % self.get_category())
-        s.append("\trootfile:\t%s" % self._file_handler.filepath)
-        s.append("\tnominal histname:\t%s" % self._nominalhistname)
-        s.append("\tsystematic histname:\t%s" % self._systkey)
-        s.append("\tyield:\t{0}".format(self._eventcount))
-        if len(self._uncertainties) != 0:
-            s.append("\tlist of uncertainties:")
-
-            temp = "\t\t%s" %  "uncertainty".ljust(15)
-            temp += "\t%s" % "type".ljust(10)
-            temp += "\t%s" % "correlation".ljust(15)
-            s.append(temp)
-            s.append("\t\t"+"_"*len(temp.expandtabs()))
-        for syst in self._uncertainties:
-            temp = "\t\t%s" % syst.ljust(15)
-            temp += "\t%s" % self._uncertainties[syst]["type"].ljust(10)
-            temp += "\t%s" % str(self._uncertainties[syst]["value"]).ljust(15)
-            s.append(temp)
-        return "\n".join(s)     
+     
 
     def add_uncertainty(self, syst, typ, value):
         """
@@ -272,6 +243,18 @@ class processObject(object):
             s += " in process %s! Please add it first" % self.get_name()
             print s
 
+    def delete_uncertainty(self,systnames):
+        if isinstance(systnames,str):
+            if systnames in self._uncertainties:
+                del self._uncertainties[systnames]
+        elif isinstance(systnames,list):
+            for systname in systnames:
+                if systname in self._uncertainties:
+                    del self._uncertainties[systname]
+        else: 
+            print "ERROR: Enter list or string"
+
+
     def get_uncertainty_value(self, systname):
         """
         return correlation of uncertainty 'systname' with this process.
@@ -294,3 +277,49 @@ class processObject(object):
         else:
 
             return ""
+
+    def __str__(self):
+        """
+        current setup: print delivers:
+            - process name
+            - process yield
+            - list of nuisance parameters
+        """
+        s = []
+        s.append("Process infos:")
+        s.append("\tname:\t%s" % self.get_name())
+        s.append("\tcategory:\t%s" % self.get_category())
+        s.append("\trootfile:\t%s" % self._file_handler.filepath)
+        s.append("\tnominal histname:\t%s" % self._nominalhistname)
+        s.append("\tsystematic histname:\t%s" % self._systkey)
+        s.append("\tyield:\t{0}".format(self._eventcount))
+        if len(self._uncertainties) != 0:
+            s.append("\tlist of uncertainties:")
+
+            temp = "\t\t%s" %  "uncertainty".ljust(15)
+            temp += "\t%s" % "type".ljust(10)
+            temp += "\t%s" % "correlation".ljust(15)
+            s.append(temp)
+            s.append("\t\t"+"_"*len(temp.expandtabs()))
+        for syst in self._uncertainties:
+            temp = "\t\t%s" % syst.ljust(15)
+            temp += "\t%s" % self._uncertainties[syst]["type"].ljust(10)
+            temp += "\t%s" % str(self._uncertainties[syst]["value"]).ljust(15)
+            s.append(temp)
+        return "\n".join(s)
+
+    def __getitem__(self, systname):
+        if systname in self._uncertainties:
+            return self._uncertainties[systname]
+        else:
+            print "ERROR: Process not in Category!"
+
+    def __iter__(self):
+        all_uncertainties=self._uncertainties
+        return all_uncertainties.__iter__()
+
+    def __contains__(self, systname):
+        if systname in self._uncertainties:
+            return True
+        else:
+            return False
