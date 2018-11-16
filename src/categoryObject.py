@@ -123,7 +123,7 @@ class categoryObject(object):
             s = "Will generate observation with name '%s'" % data_obs
             s+= " in category %s" % self._name
             print s
-            self._data_obs = self.generate_process(process_name = data_obs)
+            self._data_obs = self.create_process(process_name = data_obs)
         else:
             print "ERROR: Cannot add object of type %s as observation!" % type(data_obs)
     
