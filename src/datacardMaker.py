@@ -184,27 +184,29 @@ class datacardMaker(object):
             shape = shapelines.split()
             category_name   = shape[2]
             process_name    = shape[1]
+            file            = shape[3]
+            histname        = shape[4]
+            systname        = shape[5]
             if category_name=="*" and process_name=="*":
                     for category in list_of_categories:
-                        self.load_from_file_add_category(list_of_filekeylines=shape,
-                                                categoryName=category)
+                        self.create_category(categoryName=category,
+                        default_file=file,generic_key_systematic_hist=systname,
+                        generic_key_nominal_hist=histname)
             elif category_name in list_of_categories and process_name== "*":
-                self.load_from_file_add_category(list_of_filekeylines=shape,
-                                            categoryName=category_name)
+                self.create_category(categoryName=category_name,
+                        default_file=file,generic_key_systematic_hist=systname,
+                        generic_key_nominal_hist=histname)
         for category in list_of_categories:
             if not category in self._categories:
                 self._categories[categoryName]=categoryObject(categoryName=category)
         
 
 
-    def load_from_file_add_category(self,list_of_filekeylines,categoryName):
+    def create_category(self,categoryName,default_file=None,generic_key_systematic_hist=None,
+                    generic_key_nominal_hist=None):
         """
         Adds a categoryObject with default file and generic keys.
         """
-        default_file                = list_of_filekeylines[3]
-        generic_key_nominal_hist    = list_of_filekeylines[4]
-        generic_key_systematic_hist = list_of_filekeylines[5]
-
         self._categories[categoryName] = categoryObject(categoryName=categoryName,
                         defaultRootFile=default_file,systkey=generic_key_systematic_hist,
                         defaultnominalkey=generic_key_nominal_hist)
@@ -222,33 +224,29 @@ class datacardMaker(object):
             shape = shapelines.split()
             category_name   = shape[2]
             process_name    = shape[1]
+            file            = shape[3]
+            histname        = shape[4]
+            systname        = shape[5]
             #if the process is explicitly written in the file, initialize process with file and key information of the readout file
             for category,process,processtype in zip(list_of_categories,list_of_processes,list_of_processtypes):
                 if (category_name==category and process_name ==process) or (category_name=="*" and process_name==process):
-                    self.load_from_file_add_process(list_of_filekeylines=shape,categoryName=category,
-                                                    processName=process_name,processType=processtype)
+                    self.create_process(categoryName=category, processName=process_name,
+                                        processType=processtype, file=file, 
+                                        key_nominal_hist=histname, key_systematic_hist=systname)
         # if the process is not explicitly written in the file, initialize process with 
         # the generic keys and default file of the corresponding category
         for category,process,processtype in zip(list_of_categories,list_of_processes,list_of_processtypes):
             if not process in self._categories[category]:
-                self.load_from_file_add_process(categoryName=category,processName=process,processType=processtype)
+                self.create_process(categoryName=category,processName=process,processType=processtype)
 
 
-    def load_from_file_add_process(self,categoryName,processName,processType,list_of_filekeylines=None):
+    def create_process(self,categoryName,processName,processType,file=None,key_nominal_hist=None,key_systematic_hist=None):
         """
         Adds a signal or background process dependant on the value x of the processType 
         (x<=0 signal process, x>=1 background process)
         If no list of file and key names is handed over, it uses the default information of the category object
         to initialize a process.
         """
-        if not list_of_filekeylines is None:
-            file                 =   list_of_filekeylines[3]
-            key_nominal_hist     =   list_of_filekeylines[4]
-            key_systematic_hist  =   list_of_filekeylines[5]
-        else:
-            file                = None
-            key_nominal_hist    = None
-            key_systematic_hist = None
         if self._debug>100:
             print key_nominal_hist
             print key_systematic_hist
