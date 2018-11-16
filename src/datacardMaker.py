@@ -161,18 +161,13 @@ class datacardMaker(object):
             #checks if file is properly written
             assert len(processes)==len(categoryprocesses) 
             assert len(processes)==len(processtypes)
-            #add processes to categoryObjects
+            #add processes to categories
             self.load_from_file_add_processes(list_of_categories=categoryprocesses,
                 list_of_processes=processes, list_of_processtypes=processtypes)
 
-            #add filename, nominal histnam and systematic histname
-            #for processObjects and categoryObjects
-            self.load_from_file_add_file_and_keynames()
-
-
-            #adds systematics to processes
-            self.load_from_file_add_systematics(list_of_categories=binprocesses,
-                list_of_processes=processes )
+            # #adds systematics to processes
+            self.load_from_file_add_systematics(list_of_categories=categoryprocesses,
+                list_of_processes=processes)
             
              
         else:
@@ -187,8 +182,8 @@ class datacardMaker(object):
         """
         for shapelines in self._shapelines_:
             shape = shapelines.split()
-            category_name = shape[2]
-            process_name = shape[1]
+            category_name   = shape[2]
+            process_name    = shape[1]
             if category_name=="*" and process_name=="*":
                     for category in list_of_categories:
                         self.load_from_file_add_category(list_of_filekeylines=shape,
@@ -203,9 +198,13 @@ class datacardMaker(object):
 
 
     def load_from_file_add_category(self,list_of_filekeylines,categoryName):
-        default_file = list_of_filekeylines[3]
-        generic_key_nominal_hist = list_of_filekeylines[4]
+        """
+        Adds a categoryObject with default file and generic keys.
+        """
+        default_file                = list_of_filekeylines[3]
+        generic_key_nominal_hist    = list_of_filekeylines[4]
         generic_key_systematic_hist = list_of_filekeylines[5]
+
         self._categories[categoryName] = categoryObject(categoryName=categoryName,
                         defaultRootFile=default_file,systkey=generic_key_systematic_hist,
                         defaultnominalkey=generic_key_nominal_hist)
@@ -215,98 +214,54 @@ class datacardMaker(object):
 
 
     def load_from_file_add_processes(self,list_of_processes,list_of_categories,list_of_processtypes):
+        """
+        Adds processes to the corresponding categories.
+        Initializes process with file and key information.
+        """
         for shapelines in self._shapelines_:
             shape = shapelines.split()
-            category_name = shape[2]
-            process_name = shape[1]
-            if (category_name in list_of_categories) and (process_name in list_of_processes):
-                self.load_from_file_add_process(list_of_filekeylines=shape,categoryName=category_name,processName=process_name)
-            elif category_name==0 and process_name in list_of_processes:
+            category_name   = shape[2]
+            process_name    = shape[1]
+            #if the process is explicitly written in the file, initialize process with file and key information of the readout file
+            for category,process,processtype in zip(list_of_categories,list_of_processes,list_of_processtypes):
+                if (category_name==category and process_name ==process) or (category_name=="*" and process_name==process):
+                    self.load_from_file_add_process(list_of_filekeylines=shape,categoryName=category,
+                                                    processName=process_name,processType=processtype)
+        # if the process is not explicitly written in the file, initialize process with 
+        # the generic keys and default file of the corresponding category
         for category,process,processtype in zip(list_of_categories,list_of_processes,list_of_processtypes):
             if not process in self._categories[category]:
-                if processtype<=0:
-                    self._categories[category].create_signal_process(processName=process)
-                else:
-                    self._categories[category].create_background_process(processName=process)
+                self.load_from_file_add_process(categoryName=category,processName=process,processType=processtype)
 
 
-    def load_from_file_add_process(self,list_of_filekeylines,categoryName,processName):
-        file = list_of_filekeylines[3]
-        key_nominal_hist = list_of_filekeylines[4]
-        key_systematic_hist = list_of_filekeylines[5]
-        self._categories[categoryName].create_process(processName=processName,
-                        rootfile=file,systkey=key_systematic_hist,
-                        histoname=key_nominal_hist)
+    def load_from_file_add_process(self,categoryName,processName,processType,list_of_filekeylines=None):
+        """
+        Adds a signal or background process dependant on the value x of the processType 
+        (x<=0 signal process, x>=1 background process)
+        If no list of file and key names is handed over, it uses the default information of the category object
+        to initialize a process.
+        """
+        if not list_of_filekeylines is None:
+            file                 =   list_of_filekeylines[3]
+            key_nominal_hist     =   list_of_filekeylines[4]
+            key_systematic_hist  =   list_of_filekeylines[5]
+        else:
+            file                = None
+            key_nominal_hist    = None
+            key_systematic_hist = None
+        if self._debug>100:
+            print key_nominal_hist
+            print key_systematic_hist
+        if int(processType)<=0:
+            self._categories[categoryName].create_signal_process(processName=processName,
+                            rootfile=file,histoname=key_nominal_hist,systkey=key_systematic_hist)
+        elif int(processType)>0:
+            self._categories[categoryName].create_background_process(processName=processName,
+                            rootfile=file,histoname=key_nominal_hist,systkey=key_systematic_hist)
+
         if self._debug >= 50:
                     print "initialized process", processName, "in category", categoryName
                     print self._categories[categoryName]
-
-    # def load_from_file_add_processes_raw(self,list_of_processes,list_of_categories,
-    #                                     list_of_processtypes):
-    #     """
-    #     Adds empty processObject to categoryObject
-    #     """
-    #     for process,category,pt in zip(list_of_processes,list_of_categories,list_of_processtypes):
-
-    #             proc=processObject(processName=process, categoryName=category)
-    #             processtype = int(pt)
-    #             #checks if process is a background or signal process and 
-    #             #adds it to the categoryObject
-    #             if processtype >= 1:
-    #                 self._categories[category].add_background_process(proc)
-    #             else:
-    #                 self._categories[category].add_signal_process(proc)
-
-    def load_from_file_add_file_and_keynames(self):
-        for shapelines in self._shapelines_:
-                shape = shapelines.split()
-                category_name = shape[2]
-                process_name = shape[1]
-                if category_name=="*":
-                    for category in self._categories:
-                        if process_name=="*":
-                            self.load_from_file_add_generic_keys(category_name=category,
-                                list_of_shapelines=shape)
-                        self.load_from_file_manage_processes(category_name=category,
-                            process_name=process_name,list_of_shapelines=shape)
-                elif category_name in self._categories:
-                    if process_name == "*":
-                        self.load_from_file_add_generic_keys(category_name=category_name,
-                            list_of_shapelines=shape)
-                    self.load_from_file_manage_processes(category_name = category_name,
-                         process_name=process_name,list_of_shapelines=shape)
-
-
-    def load_from_file_add_generic_keys(self,category_name,list_of_shapelines):
-    	#adds generic key for categories
-        category=self._categories[category_name]
-        category.default_file = list_of_shapelines[3]
-        category.generic_key_nominal_hist = list_of_shapelines[4]
-        category.generic_key_systematic_hist = list_of_shapelines[5]
-
-    def load_from_file_add_keys(self, category_name,process_name,list_of_shapelines):
-        """
-        add filename, nominal key and systematic key to processObject
-        """
-        process = self._categories[category_name][process_name]
-        process.file = list_of_shapelines[3]
-        process.key_nominal_hist = list_of_shapelines[4]
-        process.key_systematic_hist = list_of_shapelines[5]
-
-
-    def load_from_file_manage_processes(self, category_name, process_name, list_of_shapelines):
-        """
-        Search process corresponding to shapeline and add the explicit key names
-        """
-        if process_name == "*":
-            for process in self._categories[category_name]:
-                self.load_from_file_add_keys(category_name=category_name,
-                    process_name=process,list_of_shapelines=list_of_shapelines)
-        elif process_name in self._categories[category_name]:
-            self.load_from_file_add_keys(category_name=category_name,
-                    process_name=process_name,list_of_shapelines=list_of_shapelines)
-        else:
-            print "could not find process %s in category %s" % (process_name, category_name)
 
 
     def load_from_file_add_systematics(self,list_of_categories,list_of_processes):
@@ -358,7 +313,7 @@ class datacardMaker(object):
 
 
     def update_systematics(self, category):
-        
+        #does not update only collects first time?
         self.collect_uncertainties(process_dict = category.signal_processes)
         self.collect_uncertainties(process_dict = category.background_processes)
             
