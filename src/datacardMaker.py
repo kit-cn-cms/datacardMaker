@@ -528,9 +528,9 @@ class datacardMaker(object):
         bkgprocs=self.get_bkg_processes()
 
         lines = []
-        for systematic in self._systematics:
-        	temp="%s" % systematic.ljust(25)
-        	temp+="%s" % str(self._systematics[systematic].type).ljust(25)
+        for systematic in sorted(self._systematics):
+        	temp="%s" % systematic.ljust(35)
+        	temp+="%s" % str(self._systematics[systematic].type).ljust(15)
         	for category in self._categories:
         		#Signal processes first
         		for number,signal_process in enumerate(signalprocs):
