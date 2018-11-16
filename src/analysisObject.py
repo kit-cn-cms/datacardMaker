@@ -34,7 +34,7 @@ class analysisObject(object):
                 self._categories[catname] = category
                 # self.update_systematics(category = category)
             else:
-                print "ERROR: Category %s is known to this datacard!" % catname
+                print "ERROR: Category %s is known to this analysisObject!" % catname
         else:
             print "ERROR: Input required to be instance of categoryObject!"
 
@@ -53,18 +53,21 @@ class analysisObject(object):
     def add_signal_process(self, process, categoryName=None):
     	"""
     	Adds a signal process and creates a categoryObject where the processObject is stored
-    	if there is no categoryObject.
+    	if there is no categoryObject. Maps to the categoryObject function.
     	"""
     	if categoryName==None:
     		categoryName=process.category
     	if not categoryName in self._categories:
     		self.create_category(categoryName=categoryName)
-    	self._categories[category].add_signal_process(process)
+    	if not process in self._categories:
+    		self._categories[category].add_signal_process(process)
+    	else:
+    		print print "ERROR: Process %s is known to this analysisObject!" % process.name
 
    	def add_background_process(self, process, categoryName=None):
    		"""
     	Adds a background process and creates a categoryObject where the processObject is stored
-    	if there is no categoryObject.
+    	if there is no categoryObject. Maps to the categoryObject function.
     	"""
     	if categoryName==None:
     		categoryName=process.category
@@ -83,10 +86,10 @@ class analysisObject(object):
         if self._debug>100:
             print key_nominal_hist
             print key_systematic_hist
-        if int(processType)<=0:
+        if int(processType)<=0 or processType=="signal":
             self._categories[categoryName].create_signal_process(processName=processName,
                             rootfile=file,histoname=key_nominal_hist,systkey=key_systematic_hist)
-        elif int(processType)>0:
+        elif int(processType)>0 or processType=="background":
             self._categories[categoryName].create_background_process(processName=processName,
                             rootfile=file,histoname=key_nominal_hist,systkey=key_systematic_hist)
 
@@ -147,7 +150,7 @@ class analysisObject(object):
             #first cleanup lines
             categories=self._bins.split()
             categories.pop(0)
-            self.load_from_file_add_categories(list_of_categories= categories)
+            self._load_from_file_add_categories(list_of_categories= categories)
             
             #Create processObjects for each process in a category 
             #and add it to its correspoding categoryObjects 
@@ -162,11 +165,11 @@ class analysisObject(object):
             assert len(processes)==len(categoryprocesses) 
             assert len(processes)==len(processtypes)
             #add processes to categories
-            self.load_from_file_add_processes(list_of_categories=categoryprocesses,
+            self._load_from_file_add_processes(list_of_categories=categoryprocesses,
                 list_of_processes=processes, list_of_processtypes=processtypes)
 
             # #adds systematics to processes
-            self.load_from_file_add_systematics(list_of_categories=categoryprocesses,
+            self._load_from_file_add_systematics(list_of_categories=categoryprocesses,
                 list_of_processes=processes)
             
              
@@ -174,7 +177,7 @@ class analysisObject(object):
             print "could not load %s: no such file" % pathToDatacard
 
 
-    def load_from_file_add_categories(self,list_of_categories):
+    def _load_from_file_add_categories(self,list_of_categories):
         """
         Line for categories: careful with combined categories, 
         key logic wont be working cause channels will be numerated
@@ -201,7 +204,7 @@ class analysisObject(object):
                 self._categories[categoryName]=categoryObject(categoryName=category)
         
 
-    def load_from_file_add_processes(self,list_of_processes,list_of_categories,list_of_processtypes):
+    def _load_from_file_add_processes(self,list_of_processes,list_of_categories,list_of_processtypes):
         """
         Adds processes to the corresponding categories.
         Initializes process with file and key information.
@@ -226,7 +229,7 @@ class analysisObject(object):
                 self.create_process(categoryName=category,processName=process,processType=processtype)
 
 
-    def load_from_file_add_systematics(self,list_of_categories,list_of_processes):
+    def _load_from_file_add_systematics(self,list_of_categories,list_of_processes):
         """
         One line for one systematic, knows type: adds systematic to process with 
         value given in the file
