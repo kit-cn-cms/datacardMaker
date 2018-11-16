@@ -123,7 +123,7 @@ class categoryObject(object):
             s = "Will generate observation with name '%s'" % data_obs
             s+= " in category %s" % self._name
             print s
-            self._data_obs = self.generate_process(process_name = data_obs)
+            self._data_obs = self.create_process(process_name = data_obs)
         else:
             print "ERROR: Cannot add object of type %s as observation!" % type(data_obs)
     
@@ -172,7 +172,8 @@ class categoryObject(object):
         add a signal process. Calls function add_process with 
         list of signal processes
         """
-        self._signalprocs[processName]=self.create_process( processName = processName,
+        self._create_process(processName = processName,
+                            dic = self._signalprocs,
                             rootfile = rootfile, histoname = histoname,
                             systkey = systkey)      
     
@@ -181,12 +182,14 @@ class categoryObject(object):
         """
         add a background process. Calls function add_process with 
         list of background processes
-        """                           
-        self._bkgprocs[processName]=self.create_process( processName = processName,
+        """
+        self._create_process(processName = processName,
+                            dic=self._bkgprocs,
                             rootfile = rootfile, histoname = histoname,
-                            systkey = systkey) 
+                            systkey = systkey)
 
-    def create_process(self, processName , rootfile = None, 
+
+    def _create_process(self, processName, dic, rootfile = None, 
                                 histoname = None, systkey = None):
         categoryName=self.name
         if histoname is None:
@@ -194,11 +197,17 @@ class categoryObject(object):
         if systkey is None:
             systkey = self.generic_key_systematic_hist
         if rootfile is None:
-            rootfile = self.default_file                   
-        return processObject(processName=processName, categoryName=categoryName,
+            rootfile = self.default_file
+        if self._debug>99:
+            print "-"*130
+            print "DEBUG PROCESSOBJECT: creating process"
+            print "histoname =", histoname
+            print "-"*130                 
+        processObj=processObject(processName=processName, categoryName=categoryName,
                             pathToRootfile = rootfile, 
                             nominal_hist_key = histoname,
                             systematic_hist_key = systkey)
+        self.add_process(dic=dic, process=processObj)
                             
 
     def add_signal_process( self, process):
@@ -206,7 +215,7 @@ class categoryObject(object):
         add a signal process. Calls function add_process with 
         list of signal processes
         """
-        self.add_process(   dic = self._signalprocs, process = process)      
+        self.add_process(dic = self._signalprocs, process = process)      
     
     def add_background_process( self, process):
         """
@@ -214,16 +223,22 @@ class categoryObject(object):
         list of background processes
         """
                                     
-        self.add_process(   dic = self._bkgprocs, process = process)
+        self.add_process(dic = self._bkgprocs, process = process)
                             
     def add_process(self, dic, process):
         if isinstance(process, processObject):
-            if self._debug >= 99:
-                print "DEBUG: adding process", process.name
-                print process
-            if self.default_file is None:
-                self.default_file = process.file
-            dic[process.name] = process
+            if not process.name in dic:
+                if self._debug >= 99:
+                    print "DEBUG: adding process", process.name
+                    print process
+                dic[process.name] = process
+                if self.default_file is None:
+                    self.default_file = process.file
+            
+            else:
+                s= "ERROR: process '%s' already exists in" % process.name
+                s+= " " + self._name
+                print s
         else:
             print "ERROR: Category can only contain processes!"
 
@@ -254,21 +269,35 @@ class categoryObject(object):
             uncertainty_label=processes[0]
             processes.pop(0)
             for process in processes:
-                temp_process=self.create_process(processName=process)
-                for uncertainty,typ,value in zip(csv_reader[uncertainty_label],csv_reader[typ_label],csv_reader[process]):
-                    if "lumi" in uncertainty:
-                        value = 1.025
-                    elif "bgnorm" in uncertainty:
-                        value = 1.5
-                    temp_process.add_uncertainty(syst=uncertainty,typ=typ,value=value)
-                if signaltag in process:
-                    self.add_signal_process(temp_process)
+                if not process in self:
+                    if signaltag in process:
+                        self.create_signal_process(processName=process)
+                    else:
+                        self.create_background_process(processName=process)  
                 else:
-                    self.add_background_process(temp_process)   
+                    print "found process", process
+                    temp_process = self[process]
 
-
-
-
+                for uncertainty,typ,value in zip(csv_reader[uncertainty_label],csv_reader[typ_label],csv_reader[process]):
+                    value = value.replace(" ", "")
+                    typ = typ.replace(" ", "")
+                    uncertainty = uncertainty.replace(" ", "")
+                    if self._debug >= 99:
+                        print "DEBUG: adding combination ({0},\t{1},\t{2}) for {3}".format(uncertainty,typ,value, process)
+                    if "lumi" in uncertainty and (value == "x" or value == "X"):
+                        value = 1.025
+                        print "changing value to", value
+                    elif "bgnorm" in uncertainty and (value == "x" or value == "X"):
+                        value = 1.5
+                        print "changing value to", value
+                    if not value=="-":
+                        if uncertainty in self[process]._uncertainties:
+                            if self._debug >=30:
+                                print "DEBUG: setting {0} to \t{1} and \t{2} for process {3}".format(uncertainty,typ,value, process)
+                            self[process].set_uncertainty(syst=uncertainty,typ=typ,value=value)
+                        else:
+                            self[process].add_uncertainty(syst=uncertainty,typ=typ,value=value)
+                 
 
     def __getitem__(self, process):
         

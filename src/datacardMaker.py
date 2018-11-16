@@ -268,15 +268,15 @@ class datacardMaker(object):
         value given in the file
         """
         for systematics in self._systematics_:
-                systematic = systematics.split()
-                sys=systematic[0]
-                typ=systematic[1]
-                systematic.pop(1)
-                systematic.pop(0)
-                for value,process,category in zip(systematic,list_of_processes,list_of_categories):
-                    if value!="-":
-                        self._categories[category][process].add_uncertainty( syst = sys,
-                                                            typ = typ, value = value)
+            systematic = systematics.split()
+            sys=systematic[0]
+            typ=systematic[1]
+            systematic.pop(1)
+            systematic.pop(0)
+            for value,process,category in zip(systematic,list_of_processes,list_of_categories):
+                if value!="-":
+                    self._categories[category][process].add_uncertainty( syst = sys,
+                                                        typ = typ, value = value)
 
     def get_number_of_procs(self):
         """
@@ -596,6 +596,7 @@ class datacardMaker(object):
         size+=5
 
         lines = []
+
         for systematic in self._systematics:
             temp="%s" % systematic.ljust(size)
             temp+="%s" % str(self._systematics[systematic].type).ljust(size)
