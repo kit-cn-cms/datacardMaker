@@ -1,3 +1,4 @@
+from sys import exit
 class identificationLogic(object):
     """
     The identificationLogic class is meant to handle all logic concerning
@@ -22,7 +23,7 @@ class identificationLogic(object):
                                      , e.g. $SYSTEMATIC
                                      (member variable: _systIden)
     """
-    _debug = 1
+    _debug = 100
     _allowed_dependencies = ["process", "channel"]
     def init_variables(self):
         """
@@ -132,16 +133,26 @@ class identificationLogic(object):
         """
         build a key from 'base_key' for a specific channel 'channel_name'.
         """
+        print "-"*130
+        print "DEBUG Identification_logic INSERT_CHANNEL: entering function"
+        print "-"*130
         if base_key is None or base_key == "":
             print "unsuitable base_key!"
-            return "" 
+            return ""
+        print channel_name
         if not channel_name == "" and not channel_name is None:
+            print "-"*130 
+            print base_key
+            print "-"*130
             if self._chIden in base_key:
                 s = base_key.replace(self._chIden, channel_name)
                 if self._debug >= 30:
                     print "-"*130, "\nDEBUG: key after channel insertion:", s
                     print "-"*130
                 return s
+            else:
+                print "UPS"
+                exit(0)
         return base_key
 
     def insert_process(self, process_name, base_key):
@@ -179,8 +190,10 @@ class identificationLogic(object):
             base_key = self._generic_nom_key
         key = self.insert_process(  process_name=process_name,
                                     base_key = base_key)
+        print "DEBUG: Identification_logic - build_nominal_histo_name : key =", key
         key = self.insert_channel(  channel_name = channel_name, 
                                     base_key = key)
+        print "DEBUG: Identification_logic - build_nominal_histo_name : key =", key
         return key
 
     def build_systematic_histo_name_down(   self, process_name = "",

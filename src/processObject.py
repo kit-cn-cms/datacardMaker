@@ -32,12 +32,15 @@ class processObject(object):
         self.init_variables()
         if not processName is None:
             self._name              = processName
+        if not categoryName is None:
+            self._categoryname      = categoryName
         if not pathToRootfile is None:
             self.file = pathToRootfile
         if not nominal_hist_key is None:
+            print "-"*130
+            print "DEBUG PROCESSOBJECT INIT: setting key_nominal_hist to", nominal_hist_key
+            print "-"*130
             self.key_nominal_hist   = nominal_hist_key
-        if not categoryName is None:
-            self._categoryname      = categoryName
         
         #if self._calculate_yield:
         #    self._eventcount        = self.calculate_yield()
@@ -157,8 +160,12 @@ class processObject(object):
                 self._nominalhistname = hname
                 self._eventcount = self._file_handler.get_integral(hname)
         else:
+            print "-"*130
+            print "DEBUG PROCESSOBJECT key_nominal_hist setter: detected generic key"
+            print "-"*130
             hist = self._id_logic.build_nominal_histo_name(process_name = self._name, base_key = hname, 
                 channel_name = self._categoryname)
+            print hist
             if self._file_handler.histogram_exists(histname = hist):
                 self._nominalhistname = hist
                 self._eventcount = self._file_handler.get_integral(hist)
