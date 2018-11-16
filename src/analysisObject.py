@@ -86,6 +86,10 @@ class analysisObject(object):
         if int(processType)<=0:
             self._categories[categoryName].create_signal_process(processName=processName,
                             rootfile=file,histoname=key_nominal_hist,systkey=key_systematic_hist)
+            print "-"*130
+            print "DEBUG: created process", processName
+            print self._categories[categoryName][processName]
+            print "-"*130
         elif int(processType)>0:
             self._categories[categoryName].create_background_process(processName=processName,
                             rootfile=file,histoname=key_nominal_hist,systkey=key_systematic_hist)
@@ -188,10 +192,10 @@ class analysisObject(object):
             histname 		= shape[4]
             systname		= shape[5]
             if category_name=="*" and process_name=="*":
-                    for category in list_of_categories:
-                        self.create_category(categoryName=category,
-                        default_file=file,generic_key_systematic_hist=systname,
-                        generic_key_nominal_hist=histname)
+                for category in list_of_categories:
+                    self.create_category(categoryName=category,
+                    default_file=file,generic_key_systematic_hist=systname,
+                    generic_key_nominal_hist=histname)
             elif category_name in list_of_categories and process_name== "*":
                 self.create_category(categoryName=category_name,
                         default_file=file,generic_key_systematic_hist=systname,
@@ -232,14 +236,14 @@ class analysisObject(object):
         value given in the file
         """
         for systematics in self._systematics_:
-                systematic = systematics.split()
-                sys=systematic[0]
-                typ=systematic[1]
-                systematic.pop(1)
-                systematic.pop(0)
-                for value,process,category in zip(systematic,list_of_processes,list_of_categories):
-                    if value!="-":
-                        self._categories[category][process].add_uncertainty( syst = sys,
+            systematic = systematics.split()
+            sys=systematic[0]
+            typ=systematic[1]
+            systematic.pop(1)
+            systematic.pop(0)
+            for value,process,category in zip(systematic,list_of_processes,list_of_categories):
+                if value!="-":
+                    self._categories[category][process].add_uncertainty( syst = sys,
                                                             typ = typ, value = value)
 
 

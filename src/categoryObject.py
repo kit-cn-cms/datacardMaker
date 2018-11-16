@@ -194,7 +194,11 @@ class categoryObject(object):
         if systkey is None:
             systkey = self.generic_key_systematic_hist
         if rootfile is None:
-            rootfile = self.default_file                   
+            rootfile = self.default_file
+        print "-"*130
+        print "DEBUG PROCESSOBJECT: creating process"
+        print "histoname =", histoname
+        print "-"*130                 
         return processObject(processName=processName, categoryName=categoryName,
                             pathToRootfile = rootfile, 
                             nominal_hist_key = histoname,
