@@ -172,7 +172,7 @@ class categoryObject(object):
         add a signal process. Calls function add_process with 
         list of signal processes
         """
-        self._signalprocs[processName]=self.create_process( processName = name,
+        self._signalprocs[processName]=self.create_process( processName = processName,
                             rootfile = rootfile, histoname = histoname,
                             systkey = systkey)      
     
@@ -182,7 +182,7 @@ class categoryObject(object):
         add a background process. Calls function add_process with 
         list of background processes
         """                           
-        self._bkgprocs[processName]=self.create_process( processName = name,
+        self._bkgprocs[processName]=self.create_process( processName = processName,
                             rootfile = rootfile, histoname = histoname,
                             systkey = systkey) 
 
@@ -194,7 +194,7 @@ class categoryObject(object):
         if systkey is None:
             systkey = self.generic_key_systematic_hist
         if rootfile is None:
-            rootfile = self.default_file                         
+            rootfile = self.default_file                   
         return processObject(processName=processName, categoryName=categoryName,
                             pathToRootfile = rootfile, 
                             nominal_hist_key = histoname,
