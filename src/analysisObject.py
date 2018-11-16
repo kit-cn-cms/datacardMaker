@@ -52,6 +52,9 @@ class analysisObject(object):
                     print "initialized category", categoryName
                     print self._categories[categoryName]
 
+    def delete_category(self,categoryName):
+    	del self._categories[categoryName]
+
     def add_signal_process(self, process, categoryName=None):
     	"""
     	Adds a signal process and creates a categoryObject where the processObject is stored
@@ -120,6 +123,17 @@ class analysisObject(object):
         if self._debug >= 50:
                     print "initialized process", processName, "in category", categoryName
                     print self._categories[categoryName]
+
+    def delete_process(self,processName,categoryName=None):
+        if not categoryName==None:
+            self._categories[categoryName].delete_process(processName=processName)
+            if self._debug>30:
+    		print "DEBUG: deleted process %s in category %s" % (processName,categoryName)
+        else:
+            for category in self._categories:
+                self._categories[category].delete_process(processName=processName)
+	        if self._debug>30:
+	            print "DEBUG: deleted process %s in category %s" % (processName,category)
 
 
     def update_systematics(self, category):
@@ -320,14 +334,15 @@ class analysisObject(object):
     		print "-"*130
     		print "ERROR: no categories in analysisObject! Create categoryObjects first!"
     		print "-"*130
-    		
+
 
     def __str__(self):
         s = []
         s.append("List of Categories:")
-        s.append("_"*100)
+        s.append("_"*30)
         for category in self._categories:
             s.append("%s" % self._categories[category])
+            s.append("_"*30)
         return "\n".join(s)
 
 
