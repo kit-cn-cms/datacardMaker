@@ -264,18 +264,19 @@ class categoryObject(object):
             uncertainty_label=processes[0]
             processes.pop(0)
             for process in processes:
-                if not process in self:
-                    temp_process=self.create_process(processName=process)
+                clear_procname = process.replace(" ", "")
+                if not clear_procname in self:
+                    temp_process=self.create_process(processName=clear_procname)
                 else:
-                    print "found process", process
-                    temp_process = self[process]
+                    print "found process", clear_procname
+                    temp_process = self[clear_procname]
 
                 for uncertainty,typ,value in zip(csv_reader[uncertainty_label],csv_reader[typ_label],csv_reader[process]):
                     value = value.replace(" ", "")
                     typ = typ.replace(" ", "")
                     uncertainty = uncertainty.replace(" ", "")
                     if self._debug >= 99:
-                        print "DEBUG: adding combination ({0},\t{1},\t{2}) for {3}".format(uncertainty,typ,value, process)
+                        print "DEBUG: adding combination ({0},\t{1},\t{2}) for {3}".format(uncertainty,typ,value, clear_procname)
                     if "lumi" in uncertainty and (value == "x" or value == "X"):
                         value = 1.025
                         print "changing value to", value
@@ -283,7 +284,7 @@ class categoryObject(object):
                         value = 1.5
                         print "changing value to", value
                     temp_process.add_uncertainty(syst=uncertainty,typ=typ,value=value)
-                if signaltag in process:
+                if signaltag in clear_procname:
                     self.add_signal_process(temp_process)
                 else:
                     self.add_background_process(temp_process)   

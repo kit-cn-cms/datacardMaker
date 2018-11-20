@@ -150,9 +150,6 @@ class identificationLogic(object):
                     print "-"*130, "\nDEBUG: key after channel insertion:", s
                     print "-"*130
                 return s
-            else:
-                print "UPS"
-                exit(0)
         return base_key
 
     def insert_process(self, process_name, base_key):
