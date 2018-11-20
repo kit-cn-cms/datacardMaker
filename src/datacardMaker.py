@@ -597,7 +597,7 @@ class datacardMaker(object):
 
         lines = []
 
-        for systematic in self._systematics:
+        for systematic in sorted(self._systematics):
             temp="%s" % systematic.ljust(size)
             temp+="%s" % str(self._systematics[systematic].type).ljust(size)
             for category in self._categories:
