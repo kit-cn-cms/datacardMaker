@@ -193,7 +193,7 @@ class processObject(object):
     def add_uncertainty(self, syst, typ, value):
         """
         add an uncertainty to this process. This function checks
-        - whether there already is an entry for 'systname'
+        - whether there already is an entry for 'systematicName'
         - the given value is suitable for a datacard 
             (see valueConventions.is_good_systval)
         and only adds the systematics if it's new and has a good value
@@ -226,54 +226,61 @@ class processObject(object):
         return False
 
 
-    def set_uncertainty(self, systname, typ, value):
+    def set_uncertainty(self, systematicName, typ, value):
         """
-        set the uncertainty 'systname' for this process to type 'typ' 
+        set the uncertainty 'systematicName' for this process to type 'typ' 
         and value 'value'. This function checks
-        - whether there is an entry for 'systname' in the first place
+        - whether there is an entry for 'systematicName' in the first place
         - the given value is suitable for a datacard (see 'is_good_systval')
         and only adds the systematics if there is an entry and the value is good
         """
-        if systname in self._uncertainties:
+        if systematicName in self._uncertainties:
             if self._value_rules.is_good_systval(value):
-                self._uncertainties[systname]["value"] = str(value)
-                self._uncertainties[systname]["type"] = typ
+                self._uncertainties[systematicName]["value"] = str(value)
+                self._uncertainties[systematicName]["type"] = typ
         else:
-            s = "There is no entry for uncertainty %s" % systname
+            s = "There is no entry for uncertainty %s" % systematicName
             s += " in process %s! Please add it first" % self.get_name()
             print s
 
-    def delete_uncertainty(self,systnames):
-        if isinstance(systnames,str):
-            if systnames in self._uncertainties:
-                del self._uncertainties[systnames]
-        elif isinstance(systnames,list):
-            for systname in systnames:
-                if systname in self._uncertainties:
-                    del self._uncertainties[systname]
-        else: 
-            print "ERROR: Enter list or string"
+    def delete_uncertainty(self,systematicName):
+        if systematicName in self._uncertainties:
+            del self._uncertainties[systematicName]
+            if self._debug>30:
+                temp= "DEBUG: deleted uncertainty %s in process %s" % (systematicName,self.name)
+                if not self.category=="":
+                    temp+=" in category %s" % self.category
+                print "".join(temp)
 
 
-    def get_uncertainty_value(self, systname):
+        else:
+            print "ERROR: uncertainty %s not in process %s" % (systematicName,self.name)
+        
+
+    def delete_uncertainties(self,list_of_systnames):
+        for systematic in list_of_systnames:
+            self.delete_uncertainty(systematicName=systematic)
+
+
+    def get_uncertainty_value(self, systematicName):
         """
-        return correlation of uncertainty 'systname' with this process.
-        If there is no entry for 'systname' in this process, the function 
+        return correlation of uncertainty 'systematicName' with this process.
+        If there is no entry for 'systematicName' in this process, the function 
         returns '-'
         """
-        if systname in self._uncertainties:
-            return self._uncertainties[systname]["value"]
+        if systematicName in self._uncertainties:
+            return self._uncertainties[systematicName]["value"]
         else:
             return "-"
 
-    def get_uncertainty_type(self, systname):
+    def get_uncertainty_type(self, systematicName):
         """
-        return type of uncertainty 'systname' in this process.
-        If there is no entry for 'systname' in this process, the function 
+        return type of uncertainty 'systematicName' in this process.
+        If there is no entry for 'systematicName' in this process, the function 
         returns ''
         """
-        if systname in self._uncertainties:
-            return self._uncertainties[systname]["type"]
+        if systematicName in self._uncertainties:
+            return self._uncertainties[systematicName]["type"]
         else:
 
             return ""
@@ -308,9 +315,9 @@ class processObject(object):
             s.append(temp)
         return "\n".join(s)
 
-    def __getitem__(self, systname):
-        if systname in self._uncertainties:
-            return self._uncertainties[systname]
+    def __getitem__(self, systematicName):
+        if systematicName in self._uncertainties:
+            return self._uncertainties[systematicName]
         else:
             print "ERROR: Process not in Category!"
 
@@ -318,8 +325,8 @@ class processObject(object):
         all_uncertainties=self._uncertainties
         return all_uncertainties.__iter__()
 
-    def __contains__(self, systname):
-        if systname in self._uncertainties:
+    def __contains__(self, systematicName):
+        if systematicName in self._uncertainties:
             return True
         else:
             return False
