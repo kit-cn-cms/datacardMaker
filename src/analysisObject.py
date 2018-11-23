@@ -52,22 +52,19 @@ class analysisObject(object):
                     print "initialized category", categoryName
                     print self._categories[categoryName]
 
-    def delete_category(self,categories):
-        if isinstance(categories,list):
-            for category in categories:
-                if category in self._categories:
-                    del self._categories[category]
-                else:
-                    if self._debug>30:
-                        print "DEBUG: Category %s doesnt exist" % categoryName
-        elif isinstance(categories,str):
-            if categories in self._categories:
-                    del self._categories[categories]
+    def delete_category(self,categoryName):
+        if isinstance(categoryName,list):
+            self.delete_categories(list_of_categories=categoryName)
+        elif isinstance(categoryName,str):
+            if categoryName in self._categories:
+                    del self._categories[categoryName]
             else:
                 if self._debug>30:
                     print "DEBUG: Category %s doesnt exist" % categoryName
-        else: 
-            print "ERROR: Enter list or string"
+
+    def delete_categories(self,list_of_categories):
+        for category in list_of_categories:
+            self.delete_category(categoryName=category)
 
 
     def add_signal_process(self, process, categoryName=None):
@@ -139,33 +136,29 @@ class analysisObject(object):
                     print "initialized process", processName, "in category", categoryName
                     print self._categories[categoryName]
 
-    def delete_process_for_all_categories(self,processes):
-        if isinstance(processes,str):
+    def delete_processes_for_all_categories(self,list_of_processes):
+        for process in list_of_processes:
+            self.delete_process_for_all_categories(processName=process)
+        
+    def delete_process_for_all_categories(self,processName):
+        if isinstance(processName,list):
+            self.delete_processes_for_all_categories(list_of_processes=processName)
+        elif isinstance(processName,str):
             for category in self._categories:
-                self._delete_process(processName=processes, categoryName=category)
-        elif isinstance(processes,list):
-            for process in processes:
-                for category in self._categories:
-                    self._delete_process(processName=process, categoryName=category)
+                self._categories[category].delete_process(processName=processName)
                 
-    def _delete_process(self,processName,categoryName):
-        if processName in self._categories[categoryName]:
-            self._categories[categoryName].delete_process(processes=processName)
-            if self._debug>30:
-                print "DEBUG: deleted process %s in category %s" % (processName,categoryName)
 
-
-    def delete_systematic_for_all_processes(self,systematics):
-        if isinstance(systematics,str):
+    def delete_uncertainty_for_all_processes(self,systematic):
+        if isinstance(systematic,list):
+            self.delete_uncertainties_for_all_processes(list_of_systematics=systematic)
+        elif isinstance(systematic,str):
             for category in self._categories:
-                continue
-                # self._delete_process(processName=processes, categoryName=category)
-        elif isinstance(systematics,list):
-            for process in processes:
-                for category in self._categories:
-                    for process in self:
-                        continue
-                    # self._delete_process(processName=process, categoryName=category)
+                for process in self._categories[category]:
+                    self._categories[category][process].delete_uncertainty(systematicName=systematic)
+
+    def delete_uncertainties_for_all_processes(self,list_of_systematics):
+        for systematic in list_of_systematics:
+            self.delete_uncertainty_for_all_processes(systematic=systematic)
 
     def update_systematics(self, category):
         #does not update only collects first time?
@@ -192,10 +185,10 @@ class analysisObject(object):
     """
     Function to create analysisObject from datacard
     """
-    def load_from_file(self, pathToDatacard):
+    def load_from_datacard(self, pathToDatacard):
         """
-        Reads datacard from file. Creates categoryObjects for each category and
-        processObjects for the corresponding processes. 
+        Reads datacard from datacard. Creates categoryObjects for each category 
+        and processObjects for the corresponding processes. 
         Adds filename, nominal histname and systematic histname.
         Adds systematics for corresponding processes.
         """
@@ -245,7 +238,7 @@ class analysisObject(object):
             #first cleanup lines
             categories=categories_line.split()
             categories.pop(0)
-            self._load_from_file_add_categories(list_of_categories= categories,
+            self._load_from_datacard_add_categories(list_of_categories= categories,
                                                 list_of_shapelines=shape_lines)
             
             #Create processObjects for each process in a category 
@@ -261,12 +254,12 @@ class analysisObject(object):
             assert len(processes)==len(categoryprocesses) 
             assert len(processes)==len(processtypes)
             #add processes to categories
-            self._load_from_file_add_processes(list_of_categories=categoryprocesses,
+            self._load_from_datacard_add_processes(list_of_categories=categoryprocesses,
                 list_of_processes=processes, list_of_processtypes=processtypes,
                 list_of_shapelines=shape_lines)
 
             #adds systematics to processes
-            self._load_from_file_add_systematics(list_of_categories=categoryprocesses,
+            self._load_from_datacard_add_systematics(list_of_categories=categoryprocesses,
                 list_of_processes=processes,list_of_systematics=systematic_lines)
             
              
@@ -274,7 +267,7 @@ class analysisObject(object):
             print "could not load %s: no such file" % pathToDatacard
 
 
-    def _load_from_file_add_categories(self,list_of_categories,list_of_shapelines):
+    def _load_from_datacard_add_categories(self,list_of_categories,list_of_shapelines):
         """
         Line for categories: careful with combined categories, 
         key logic wont be working cause channels will be numerated
@@ -301,7 +294,7 @@ class analysisObject(object):
                 self._categories[categoryName]=categoryObject(categoryName=category)
         
 
-    def _load_from_file_add_processes(self,list_of_processes,list_of_categories,
+    def _load_from_datacard_add_processes(self,list_of_processes,list_of_categories,
                                         list_of_processtypes,list_of_shapelines):
         """
         Adds processes to the corresponding categories.
@@ -318,12 +311,13 @@ class analysisObject(object):
             for category,process,processtype in zip(list_of_categories,list_of_processes,list_of_processtypes):
                 if (category_name==category and process_name ==process) or (category_name=="*" and process_name==process):
                     if int(processtype)<=0:
-                        self.create_signal_process(categoryName=category, processName=process_name,
-                                        processType=processtype, file=file, 
-                                        key_nominal_hist=histname, key_systematic_hist=systname)
+                        self.create_signal_process(categoryName=category, 
+                                        processName=process_name,file=file, 
+                                        key_nominal_hist=histname, 
+                                        key_systematic_hist=systname)
                     elif int(processtype)>0:
-                        self.create_background_process(categoryName=category, processName=process_name,
-                                        processType=processtype, file=file, 
+                        self.create_background_process(categoryName=category, 
+                                        processName=process_name, file=file, 
                                         key_nominal_hist=histname, key_systematic_hist=systname)
         # if the process is not explicitly written in the file, initialize process with 
         # the generic keys and default file of the corresponding category
@@ -331,13 +325,13 @@ class analysisObject(object):
             if not process in self._categories[category]:
                 if int(processtype)<=0:
                     self.create_signal_process(categoryName=category,
-                                    processName=process,processType=processtype)
+                                                processName=process)
                 elif int(processtype)>0:
-                    self.create_signal_process(categoryName=category,
-                                    processName=process,processType=processtype)
+                    self.create_background_process(categoryName=category,
+                                                processName=process)
 
 
-    def _load_from_file_add_systematics(self,list_of_categories,list_of_processes,list_of_systematics):
+    def _load_from_datacard_add_systematics(self,list_of_categories,list_of_processes,list_of_systematics):
         """
         One line for one systematic, knows type: adds systematic to process with 
         value given in the file
