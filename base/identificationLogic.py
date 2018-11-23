@@ -1,4 +1,3 @@
-from sys import exit
 class identificationLogic(object):
     """
     The identificationLogic class is meant to handle all logic concerning
