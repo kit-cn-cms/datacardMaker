@@ -4,7 +4,8 @@ repo for object-oriented datacard maker
 Writes Datacards 
 
 Current structure:
-- src/datacardMaker.py: Wrapper to automatically create data cards from category/process/systematic objects
+- src/datacardMaker.py: Wrapper to automatically create data cards from analysis objects
+- src/analysisObject.py: Container for categoryObjects
 - src/categoryObject.py: Object for categories that contains processes
 - src/processObject.py: Object for process (e.g. ttH_hbb), contains uncertainties corresponding to the process
 - src/systematicObject.py: object for nuisance parameters (e.g. bgnorm_ttbarPlusBBbar)

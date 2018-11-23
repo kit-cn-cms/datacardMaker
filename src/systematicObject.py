@@ -91,7 +91,7 @@ class systematicObject(object):
             cor = self.get_correlation(process = process) 
             if cor == "-":
                 if correlation == "-":
-                    correlation = process.get_uncertainty_value(systname = self._name)
+                    correlation = process.get_uncertainty_value(systematicName = self._name)
                 self.add_process_raw(   category_name = process.category, 
                                     process_name = process.name, 
                                     value = correlation)
@@ -134,7 +134,7 @@ class systematicObject(object):
             process_name = process.name
             category = process.category
             if value == "-":
-                value = process.get_uncertainty_value(systname = self._name)
+                value = process.get_uncertainty_value(systematicName = self._name)
             if process_name in self._dic[category]:
                 if self._value_rules.is_good_systval(value):
                     self._dic[category][process_name] = value

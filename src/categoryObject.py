@@ -1,5 +1,7 @@
 from os import path
 import sys
+import csv
+import pandas
 directory = path.abspath(path.join(path.dirname("./"), "."))
 if not directory in sys.path:
     sys.path.append(directory)
@@ -17,6 +19,10 @@ class categoryObject(object):
         self._key_creator = identificationLogic()
         self._key_creator.belongs_to = "channel"
         self._default_file = None
+        self._autoMCstats = False
+        self._autoMCstats_threshold = 5
+        self._autoMCstats_include_signal = 0
+        self._autoMCstats_hist_mode = 1
     
     def __init__(   self, categoryName=None, defaultRootFile=None, 
                     defaultnominalkey=None,
@@ -44,52 +50,28 @@ class categoryObject(object):
         if not categoryName is None:
             self._name     = categoryName
         if not defaultnominalkey is None:
-            self._key_creator.generic_nominal_key = defaultnominalkey
+            self.generic_key_nominal_hist = defaultnominalkey
         if not systkey is None:
-            self._key_creator.generic_systematics_key = systkey
+            self.generic_key_systematic_hist = systkey
         if not defaultRootFile is None:
             if path.exists(defaultRootFile):
-                self._default_file = defaultRootFile
+                self.default_file = defaultRootFile
 
-        
-
-        # #check if process/channel identifiers are in nominal histo key
-        # self.is_part_of(self._procIden, self._nomkey)
-        # if self.is_part_of(self._chIden, self._nomkey):
-        #     self._nomkey = self._nomkey.replace(self._chIden, self._name)
-        
-        # #check if systematics/process/channel identifiers
-        # #are in systematics histo key
-        # if not self.is_part_of(self._systIden, self._systkey):
-        #     print "WARNING: Identifier for systematics not part of SystKey!"
-        # if self.is_part_of(self._chIden, self._systkey):
-        #     self._systkey = self._systkey.replace(self._chIden, self._name)
-
-        
-        #if a list of signal processes is given, add them with default vals
+        """
+        if a list of signal processes is given, add them with default vals
+        """
         if dict_of_signals:
             for proc in dict_of_signals:
                 self.add_signal_process(name = proc,
                                         rootfile = defaultRootFile)
-        
-        #if a list of bkg processes is given, add them with default vals
+        """
+        if a list of bkg processes is given, add them with default vals
+        """
         if dict_of_bkgs:
             for proc in dict_of_bkgs:
                 self.add_background_process(name = proc,
                                         rootfile = defaultRootFile)
-    # def is_part_of(self, identifier, key):
-    #     if identifier in key:
-    #         if self._debug:
-    #             s = "Identifier '%s' is part of " % identifier
-    #             s += "keyword '%s'" % key
-    #             print s
-    #         return True
-    #     else:
-    #         if self._debug:
-    #             s = "Identifier '%s' is not part of " % identifier
-    #             s += "keyword '%s'" % key
-    #             print s
-    #         return False
+    
 
     @property
     def n_signal_procs(self):
@@ -107,12 +89,36 @@ class categoryObject(object):
         self._name = val
 
     @property
+    def observation(self):
+        return self._data_obs
+    @observation.setter
+    def observation(self, data_obs):
+        if isinstance(data_obs, processObject):
+            s = "adding %s as observation " % data_obs.name
+            s+= "in category %s" % self._name
+            print s
+            self._data_obs = data_obs
+        elif isinstance(data_obs, str):
+            s = "Will generate observation with name '%s'" % data_obs
+            s+= " in category %s" % self._name
+            print s
+            self._create_process(processName = data_obs)
+        else:
+            print "ERROR: Cannot add object of type %s as observation!" % type(data_obs)
+    
+
+    @property
     def signal_processes(self):
         return self._signalprocs
 
     @property
     def background_processes(self):
         return self._bkgprocs
+
+    @property
+    def process_list(self):
+        return self._signalprocs.keys() + self._bkgprocs.keys()
+    
 
     
     @property
@@ -143,74 +149,99 @@ class categoryObject(object):
         else:
             print "ERROR: File '%s' does not exist!" % filepath
 
-    def add_signal_process_raw( self, name, rootfile = None, histoname = None, 
+    """
+    get and set flag for autoMCstats
+    """
+    @property
+    def autoMCstats(self):
+        return self._autoMCstats
+    @autoMCstats.setter
+    def autoMCstats(self, flag):
+        self._autoMCstats=flag
+
+    """
+    get and set value for autoMCstats threshold
+    """   
+    @property
+    def autoMCstats_threshold(self):
+        return self._autoMCstats_threshold
+    @autoMCstats_threshold.setter
+    def autoMCstats_threshold(self, value):
+        self._autoMCstats_threshold = value
+
+    """
+    get and set signal include for autoMCstats
+    """   
+    @property
+    def autoMCstats_include_signal(self):
+        return self._autoMCstats_include_signal
+    @autoMCstats_include_signal.setter
+    def autoMCstats_include_signal(self, value):
+        self._autoMCstats_include_signal = value
+
+    """
+    get and set hist mode for autoMCstats
+    """   
+    @property
+    def autoMCstats_hist_mode(self):
+        return self._autoMCstats_hist_mode
+    @autoMCstats_hist_mode.setter
+    def autoMCstats_hist_mode(self, value):
+        self._autoMCstats_hist_mode = value
+    
+
+    def create_signal_process( self, processName, rootfile = None, histoname = None, 
                             systkey = None):
         """
-        add a signal process. Calls function add_process with 
+        add a signal process. Calls function _create_process with 
         list of signal processes
         """
-        if histoname is None:
-            histoname = self._key_creator.insert_process(process_name = name,
-                            base_key = self._key_creator.generic_nominal_key)
-        if systkey is None:
-            systkey = self._key_creator.insert_process(process_name = name,
-                        base_key = self._key_creator.generic_systematics_key)
-        if rootfile is None:
-            rootfile = self._default_file
-        self.add_process_raw(   dic = self._signalprocs, name = name,
+        self._create_process(processName = processName,
+                            dic = self._signalprocs,
                             rootfile = rootfile, histoname = histoname,
                             systkey = systkey)      
     
-    def add_background_process_raw( self, name, rootfile = None, 
+    def create_background_process( self, processName, rootfile = None, 
                                 histoname = None, systkey = None):
         """
-        add a background process. Calls function add_process with 
+        add a background process. Calls function _create_process with 
         list of background processes
         """
-        if histoname is None:
-            histoname = self._nomkey
-        if systkey is None:
-            systkey = self._systkey                            
-        self.add_process_raw(   dic = self._bkgprocs, name = name,
+        self._create_process(processName = processName,
+                            dic=self._bkgprocs,
                             rootfile = rootfile, histoname = histoname,
                             systkey = systkey)
-                            
-    # def add_process(self, dic, name, rootfile, 
-    #                 histoname = None, systkey = None
-    #                 ):
-    #     changedKey = False
-    #     if histoname is None:
-    #         histoname = self._nomkey
-    #     if systkey is None:
-    #         systkey = self._systkey  
-    #     if self._procIden in histoname:
-    #         print "WARNING:\tProcess identifier is still part of nominal histo key! Will replace it"
-    #         histoname = histoname.replace(self._procIden, name)
-    #     if self._chIden in histoname:
-    #         print "WARNING:\tChannel identifier is still part of nominal histo key! Will replace it"
-    #         histoname = histoname.replace(self._chIden, name)
-    #     if self._procIden in systkey:
-    #         print "WARNING:\tProcess identifier is still part of nominal histo key! Will replace it"
-    #         systkey = systkey.replace(self._procIden, name)
-    #     if self._chIden in systkey:
-    #         print "WARNING:\tChannel identifier is still part of nominal histo key! Will replace it"
-    #         systkey = systkey.replace(self._chIden, name)
-            
-    #     controlNomKey = self._nomkey.replace(self._procIden, name)
-    #     controlSysKey = self._systkey.replace(self._procIden, name)
-    #     if not (histoname == self._nomkey and systkey == self._systkey):
-    #         changedKey = True
-        
-    #     if name in dic:
-    #         print ""
 
-    #overloaded functions if input variable is a process
+
+    def _create_process(self, processName, dic = None, rootfile = None, 
+                                histoname = None, systkey = None):
+        categoryName=self.name
+        if histoname is None:
+            histoname = self.generic_key_nominal_hist
+        if systkey is None:
+            systkey = self.generic_key_systematic_hist
+        if rootfile is None:
+            rootfile = self.default_file
+        if self._debug>99:
+            print "-"*130
+            print "DEBUG PROCESSOBJECT: creating process"
+            print "histoname =", histoname
+            print "-"*130                 
+        processObj=processObject(processName=processName, categoryName=categoryName,
+                            pathToRootfile = rootfile, 
+                            nominal_hist_key = histoname,
+                            systematic_hist_key = systkey)
+        if dic is None:
+            self._data_obs = processObj
+        else:                        
+            self._add_process(dic=dic, process=processObj)
+
     def add_signal_process( self, process):
         """
         add a signal process. Calls function add_process with 
         list of signal processes
         """
-        self.add_process(   dic = self._signalprocs, process = process)      
+        self._add_process(dic = self._signalprocs, process = process)      
     
     def add_background_process( self, process):
         """
@@ -218,28 +249,42 @@ class categoryObject(object):
         list of background processes
         """
                                     
-        self.add_process(   dic = self._bkgprocs, process = process)
+        self._add_process(dic = self._bkgprocs, process = process)
                             
-    def add_process(self, dic, process):
+    def _add_process(self, dic, process):
         if isinstance(process, processObject):
-            if self._debug >= 99:
-                print "DEBUG: adding process", process.name
-                print process
-            if self._default_file is None:
-                self.default_file = process.file
-            dic[process.name] = process
+            if not process.name in dic:
+                if self._debug >= 99:
+                    print "DEBUG: adding process", process.name
+                    print process
+                dic[process.name] = process
+                if self.default_file is None:
+                    self.default_file = process.file
+            
+            else:
+                s= "ERROR: process '%s' already exists in" % process.name
+                s+= " " + self._name
+                print s
         else:
             print "ERROR: Category can only contain processes!"
 
-            
-                
+    def delete_processes(self,list_of_processes):
+        for process in list_of_processes:
+            self.delete_process(processName=process)
+        
 
+    def delete_process(self,processName):
+        if processName in self._signalprocs:
+            del self._signalprocs[processName]
+            if self._debug>30:
+                print "DEBUG: deleted process %s in category %s" % (processName,self.name)
+        elif processName in self._bkgprocs:
+            del self._bkgprocs[processName]
+            if self._debug>30:
+                print "DEBUG: deleted process %s in category %s" % (processName,self.name)
+        else:
+            print "ERROR: no process %s found in category %s" % (processName,self.name)
 
-    def add_process_raw(self, dic, name, rootfile, histoname, systkey):
-        temp = processObject(processName = name, pathToRootfile = rootfile, 
-                    nominal_hist_key = histoname, systematic_hist_key = systkey, 
-                    categoryName = self._name)
-        self.add_process(dic = dic, process = temp)
 
     def is_compatible_with_default(self, process):
         """
@@ -247,14 +292,76 @@ class categoryObject(object):
         information for this category
         """
         nominal_is_compatible = self._key_creator.matches_generic_nominal_key(  
-            tocheck = process.nominal_hist_name, 
+            tocheck = process.key_nominal_hist, 
             process_name = process.name,
             category_name = self._name)
         systematic_is_compatible = self._key_creator.matches_generic_systematic_key(  
-            tocheck = process.systematic_hist_name, 
+            tocheck = process.key_systematic_hist, 
             process_name = process.name,
             category_name = self._name)
         return (nominal_is_compatible and systematic_is_compatible)
+
+
+    def add_from_csv(self,pathToFile,signaltag="ttH",lumi=1.025, bgnorm=1.5):
+        """
+
+        """
+        with open(pathToFile, mode="r") as csv_file:
+            csv_reader = pandas.read_csv(pathToFile, skipinitialspace=True,)
+            processes=list(csv_reader)
+            """
+            get rid of uncertainty and type entry to get processes
+            """
+            typ_label=processes[1]
+            processes.pop(1)
+            uncertainty_label=processes[0]
+            processes.pop(0)
+            """
+            initialize processes
+            """
+            for process in processes:
+                clear_procname = process.strip()
+                if not process in self:
+                    if signaltag in clear_procname:
+                        self.create_signal_process(processName=clear_procname)
+                    else:
+                        self.create_background_process(processName=clear_procname)  
+                else:
+                    print "found process", clear_procname
+                """
+                add uncertainties to process
+                """
+                for uncertainty,typ,value in zip(csv_reader[uncertainty_label],csv_reader[typ_label],csv_reader[process]):
+                    value = value.strip()
+                    typ = typ.strip()
+                    uncertainty = uncertainty.strip()
+                    if self._debug >= 99:
+                        print "DEBUG: adding combination ({0},\t{1},\t{2}) for {3}".format(uncertainty,typ,value, clear_procname)
+                    """
+                    lumi and bgnorm uncertainties can be used as an argument, not set in CSV files
+                    """
+                    if "lumi" in uncertainty and (value == "x" or value == "X"):
+                        value = lumi
+                        print "changing value to", value
+                    elif "bgnorm" in uncertainty and (value == "x" or value == "X"):
+                        value = bgnorm
+                        print "changing value to", value
+
+                    if not value is "-":
+                        if uncertainty in self[clear_procname]._uncertainties:
+                            if self._debug >=30:
+                                print "DEBUG: setting {0} to \t{1} and \t{2} for process {3}".format(uncertainty,typ,value, clear_procname)
+                            self[clear_procname].set_uncertainty(syst=uncertainty,typ=typ,value=value)
+                        else:
+                            self[clear_procname].add_uncertainty(syst=uncertainty,typ=typ,value=value)
+                 
+    """
+    overloaded get, in and for operator to get better access to processes in 
+    category object:
+    self[processName]
+    can also do:
+    self[processName][systematicName]
+    """
 
     def __getitem__(self, process):
         
@@ -284,6 +391,13 @@ class categoryObject(object):
         s = []
         s.append("Category Name:\t%s" % self._name)
         s.append("Default source file:\t%s" % self._default_file)
+        if self.observation:
+            oname = self.observation.name
+            ocount = str(self.observation.eventcount)
+        else:
+            oname = "Not set"
+            ocount = oname
+        s.append("Observations: %s (yield: %s)" % (oname, ocount))
         s.append("List of signal processes:")
         for sig in self._signalprocs:
             s.append("\t%s" % self._signalprocs[sig])
@@ -291,4 +405,7 @@ class categoryObject(object):
         s.append("List of background processes:")
         for bkg in self._bkgprocs:
             s.append("\t%s" % self._bkgprocs[bkg])
+        
+
         return "\n".join(s)
+
