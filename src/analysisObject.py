@@ -22,7 +22,22 @@ class analysisObject(object):
                     systIdentifier = "$SYSTEMATIC"):
         self.init_variables()
         if pathToDatacard:
-            self.load_from_file(pathToDatacard)
+            self.load_from_datacard(pathToDatacard)
+
+    @property
+    def systematics(self):
+        """
+        get dictionary of systematics for the analysisObject
+        """
+        self.update_systematics()
+        return self._systematics
+
+    @property
+    def categories(self):
+        """
+        get dictionary of categories for the analysisObject
+        """
+        return self._categories
 
     def add_category(self, category):
         """
@@ -73,7 +88,7 @@ class analysisObject(object):
         if there is no categoryObject. Maps to the categoryObject function. 
         Logic if process is already known is found there.
         """
-        if categoryName==None:
+        if categoryName is None:
             categoryName=process.category
         if categoryName in self._categories:
             self._categories[category].add_signal_process(process)
@@ -107,7 +122,7 @@ class analysisObject(object):
         if there is no categoryObject. Maps to the categoryObject function.
         Logic if process is already known is found there.
         """
-        if categoryName==None:
+        if categoryName is None:
             categoryName=process.category
         if categoryName in self._categories:
             self._categories[category].add_background_process(process)
@@ -155,15 +170,18 @@ class analysisObject(object):
             for category in self._categories:
                 for process in self._categories[category]:
                     self._categories[category][process].delete_uncertainty(systematicName=systematic)
+            if systematic in self._systematics:
+                del self._systematics[systematic]
 
     def delete_uncertainties_for_all_processes(self,list_of_systematics):
         for systematic in list_of_systematics:
             self.delete_uncertainty_for_all_processes(systematic=systematic)
 
-    def update_systematics(self, category):
-        #does not update only collects first time?
-        self._collect_uncertainties(process_dict = category.signal_processes)
-        self._collect_uncertainties(process_dict = category.background_processes)
+    def update_systematics(self):
+        self._systematics.clear()
+        for category in self._categories:
+            self._collect_uncertainties(process_dict = self._categories[category].signal_processes)
+            self._collect_uncertainties(process_dict = self._categories[category].background_processes)
 
 
     def _collect_uncertainties(self, process_dict):
@@ -207,12 +225,14 @@ class analysisObject(object):
                 header_lines            = []
                 #observation_line is not used right now
                 observation_line        = ""
-
+                autoMCStats_lines       = []
+                group_lines             = []
+                header_identifier = ["#Combination", "imax", "kmax", "jmax"]
                 for n, line in enumerate(lines):
                     #missing lines for advanced datacards, only working for simple ones
                     if line.startswith("-"):
                             continue
-                    elif line.startswith("Combination") or line.startswith("imax") or line.startswith("kmax") or line.startswith("jmax"):
+                    elif any(line.startswith(x) for x in header_identifier):
                         header_lines.append(line)
                     elif line.startswith("bin") and n != len(lines) and lines[n+1].startswith("observation"):
                         categories_line = line
@@ -230,37 +250,46 @@ class analysisObject(object):
                     elif line.startswith("observation") or line.startswith("rate"):
                         pass
                     elif "autoMCStats" in line:
+                        autoMCStats_lines.append(line)
+                    elif line.split()[1] is "group":
+                        group_lines.append(line)
+                    elif line.startswith("#"):
                         pass
                     else:
                         systematic_lines.append(line)
-            
-            #Create categoryObject for each category
-            #first cleanup lines
+            """
+            Create categoryObject for each category
+            first cleanup lines
+            """
             categories=categories_line.split()
             categories.pop(0)
             self._load_from_datacard_add_categories(list_of_categories= categories,
                                                 list_of_shapelines=shape_lines)
             
-            #Create processObjects for each process in a category 
-            #and add it to its correspoding categoryObjects 
-            #first cleanup lines          
+            """
+            Create processObjects for each process in a category 
+            and add it to its correspoding categoryObjects 
+            first cleanup lines   
+            """       
             processes = process_line.split()
             processes.pop(0)
             categoryprocesses = categoryprocess_line.split()
             categoryprocesses.pop(0) 
             processtypes = processtype_line.split()
             processtypes.pop(0)
-            #checks if file is properly written
-            assert len(processes)==len(categoryprocesses) 
-            assert len(processes)==len(processtypes)
-            #add processes to categories
+            
+            """
+            add processes to categories
+            """
             self._load_from_datacard_add_processes(list_of_categories=categoryprocesses,
                 list_of_processes=processes, list_of_processtypes=processtypes,
                 list_of_shapelines=shape_lines)
-
-            #adds systematics to processes
+            """
+            adds systematics to processes
+            """
             self._load_from_datacard_add_systematics(list_of_categories=categoryprocesses,
                 list_of_processes=processes,list_of_systematics=systematic_lines)
+
             
              
         else:
@@ -280,12 +309,12 @@ class analysisObject(object):
             file            = shape[3]
             histname        = shape[4]
             systname        = shape[5]
-            if category_name=="*" and process_name=="*":
+            if category_name is"*" and process_name is "*":
                 for category in list_of_categories:
                     self.create_category(categoryName=category,
                     default_file=file,generic_key_systematic_hist=systname,
                     generic_key_nominal_hist=histname)
-            elif category_name in list_of_categories and process_name== "*":
+            elif category_name in list_of_categories and process_name is "*":
                 self.create_category(categoryName=category_name,
                         default_file=file,generic_key_systematic_hist=systname,
                         generic_key_nominal_hist=histname)
@@ -307,9 +336,13 @@ class analysisObject(object):
             file            = shape[3]
             histname        = shape[4]
             systname        = shape[5]
-            #if the process is explicitly written in the file, initialize process with file and key information of the readout file
+            """
+            if the process is explicitly written in the file, 
+            initialize process with file and key information 
+            of the datacard
+            """
             for category,process,processtype in zip(list_of_categories,list_of_processes,list_of_processtypes):
-                if (category_name==category and process_name ==process) or (category_name=="*" and process_name==process):
+                if (category_name is category and process_name is process) or (category_name is "*" and process_name is process):
                     if int(processtype)<=0:
                         self.create_signal_process(categoryName=category, 
                                         processName=process_name,file=file, 
@@ -319,8 +352,11 @@ class analysisObject(object):
                         self.create_background_process(categoryName=category, 
                                         processName=process_name, file=file, 
                                         key_nominal_hist=histname, key_systematic_hist=systname)
-        # if the process is not explicitly written in the file, initialize process with 
-        # the generic keys and default file of the corresponding category
+        """
+        if the process is not explicitly written in the file, 
+        initialize process with the generic keys and default file
+        of the corresponding category
+        """
         for category,process,processtype in zip(list_of_categories,list_of_processes,list_of_processtypes):
             if not process in self._categories[category]:
                 if int(processtype)<=0:
@@ -369,6 +405,16 @@ class analysisObject(object):
             s.append("%s" % self._categories[category])
             s.append("_"*30)
         return "\n".join(s)
+
+    """
+    overloaded get, in and for operator to get better access to categories in 
+    analysis object:
+    self[categoryName]
+    can also use:
+    self[categoryName][processName]
+    and:
+    self[categoryName][processName][systematicName]
+    """
 
     def __getitem__(self, categoryName):
         
