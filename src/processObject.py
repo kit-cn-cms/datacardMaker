@@ -65,76 +65,55 @@ class processObject(object):
     #getter/setter for yields
     @property
     def eventcount(self):
-        return self.get_yield()
-    @eventcount.setter
-    def eventcount(self, val):
-        self.set_yield(val)
-
-    def set_yield(self, val):
-        """
-        set yield for processes to value val
-        """
-        self._eventcount = val
-        
-    def get_yield(self):
         """
         get yield for process
         """
         y = self._eventcount
         if self._debug >= 99:
             print "returning yield of", y
-        return y
+        return y 
+
+    @eventcount.setter
+    def eventcount(self, val):
+        """
+        set yield for processes to value val
+        """
+        self._eventcount = val
 
     #logic for process name
     @property
     def name(self):
-        return self.get_name()
+        """
+        get name for process
+        """
+        return self._name
     @name.setter
     def name(self, s):
-        if self._debug >= 99: 
-            print "entered setter for name"
-        self.set_name(s)
-
-    
-    def set_name(self, name):
         """
         set process name
         """
         if self._debug >= 20: 
             print "setting name to", name
         self._name = name
-        
-    def get_name(self):
-        """
-        create copy of process name
-        """
-        s = self._name
-        return s
+
+
 
     @property
     def category(self):
-        return self.get_category()
-
-    @category.setter
-    def category(self, catname):
-        if self._debug >= 99: 
-            print "entered setter for category"
-        self.set_category(catname)
-        # self._categoryname = catname
-    
-    def get_category(self):
         """
         get name for category to which this process belongs to
         """
         return self._categoryname
 
-    def set_category(self, catname):
+    @category.setter
+    def category(self, catname):
         """
         set name for category to which this process belongs to
         """
         if self._debug >= 20: 
             print "setting category to", catname
         self._categoryname = catname
+    
 
     @property
     def file(self):
@@ -201,10 +180,16 @@ class processObject(object):
         
         if isinstance(syst, str) and isinstance(typ, str):
             if not syst in self._uncertainties:
-                if typ == "shape":
+                if not self._value_rules.is_allowed_type(typ=typ):
+                    return False
+                if typ is "shape":
+                    tmp = syst
+                    if syst.startswith("#"):
+                        tmp = tmp.replace("#","")
+                        tmp = tmp.strip()
                     print "Looking for varied histograms for systematic", syst
                     keys = self._id_logic.build_systematic_histo_names(
-                            systematic_name = syst, base_key = self._systkey)
+                            systematic_name = tmp, base_key = self._systkey)
                     if not all(self._file_handler.histogram_exists(k) for k in keys):
                         return False
                 if self._value_rules.is_good_systval(value):
@@ -294,8 +279,8 @@ class processObject(object):
         """
         s = []
         s.append("Process infos:")
-        s.append("\tname:\t%s" % self.get_name())
-        s.append("\tcategory:\t%s" % self.get_category())
+        s.append("\tname:\t%s" % self.name)
+        s.append("\tcategory:\t%s" % self.category)
         s.append("\trootfile:\t%s" % self._file_handler.filepath)
         s.append("\tnominal histname:\t%s" % self._nominalhistname)
         s.append("\tsystematic histname:\t%s" % self._systkey)
@@ -314,6 +299,12 @@ class processObject(object):
             temp += "\t%s" % str(self._uncertainties[syst]["value"]).ljust(15)
             s.append(temp)
         return "\n".join(s)
+
+    """
+    overloaded get, in and for operator to get better access to systematics in 
+    process object:
+    self[systematicName]
+    """
 
     def __getitem__(self, systematicName):
         if systematicName in self._uncertainties:
