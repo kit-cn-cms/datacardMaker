@@ -19,10 +19,7 @@ class datacardMaker(object):
 
     def __init__(   self, analysis,
                     outputpath = "", replacefiles=False,
-                    hardcodenumbers=False,
-                    processIdentifier = "$PROCESS",
-                    channelIdentifier = "$CHANNEL",
-                    systIdentifier = "$SYSTEMATIC"):
+                    hardcodenumbers=False):
         self.init_variables()
         if replacefiles:
             self.replace_files = replacefiles
@@ -310,7 +307,7 @@ class datacardMaker(object):
             bins.append("%s" % category)
             data_obs = analysis[category].observation
             if isinstance(data_obs, processObject):
-                if self._hardcode_numbers:
+                if not self._hardcode_numbers:
                     observation.append("-1")
                 else:
                     observation.append("%s" % str(data_obs.eventcount))
@@ -445,7 +442,8 @@ class datacardMaker(object):
 
         lines = []
 
-        for systematic in analysis.systematics:
+
+        for systematic in sorted(analysis.systematics):
             temp="%s" % systematic.ljust(size)
             temp+="%s" % str(analysis.systematics[systematic].type).ljust(size)
             for category in analysis.categories:

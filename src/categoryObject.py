@@ -102,7 +102,7 @@ class categoryObject(object):
             s = "Will generate observation with name '%s'" % data_obs
             s+= " in category %s" % self._name
             print s
-            self._data_obs = self.create_process(process_name = data_obs)
+            self._create_process(processName = data_obs)
         else:
             print "ERROR: Cannot add object of type %s as observation!" % type(data_obs)
     
@@ -114,6 +114,11 @@ class categoryObject(object):
     @property
     def background_processes(self):
         return self._bkgprocs
+
+    @property
+    def process_list(self):
+        return self._signalprocs.keys() + self._bkgprocs.keys()
+    
 
     
     @property
@@ -208,7 +213,7 @@ class categoryObject(object):
                             systkey = systkey)
 
 
-    def _create_process(self, processName, dic, rootfile = None, 
+    def _create_process(self, processName, dic = None, rootfile = None, 
                                 histoname = None, systkey = None):
         categoryName=self.name
         if histoname is None:
@@ -226,8 +231,10 @@ class categoryObject(object):
                             pathToRootfile = rootfile, 
                             nominal_hist_key = histoname,
                             systematic_hist_key = systkey)
-        self._add_process(dic=dic, process=processObj)
-                            
+        if dic is None:
+            self._data_obs = processObj
+        else:                        
+            self._add_process(dic=dic, process=processObj)
 
     def add_signal_process( self, process):
         """
@@ -264,8 +271,7 @@ class categoryObject(object):
     def delete_processes(self,list_of_processes):
         for process in list_of_processes:
             self.delete_process(processName=process)
-        if self._debug>30:
-            print "DEBUG: deleted process %s" % processName
+        
 
     def delete_process(self,processName):
         if processName in self._signalprocs:
@@ -314,14 +320,14 @@ class categoryObject(object):
             initialize processes
             """
             for process in processes:
+                clear_procname = process.strip()
                 if not process in self:
-                    if signaltag in process:
-                        self.create_signal_process(processName=process)
+                    if signaltag in clear_procname:
+                        self.create_signal_process(processName=clear_procname)
                     else:
-                        self.create_background_process(processName=process)  
+                        self.create_background_process(processName=clear_procname)  
                 else:
-                    print "found process", process
-                    temp_process = self[process]
+                    print "found process", clear_procname
                 """
                 add uncertainties to process
                 """
@@ -330,7 +336,7 @@ class categoryObject(object):
                     typ = typ.strip()
                     uncertainty = uncertainty.strip()
                     if self._debug >= 99:
-                        print "DEBUG: adding combination ({0},\t{1},\t{2}) for {3}".format(uncertainty,typ,value, process)
+                        print "DEBUG: adding combination ({0},\t{1},\t{2}) for {3}".format(uncertainty,typ,value, clear_procname)
                     """
                     lumi and bgnorm uncertainties can be used as an argument, not set in CSV files
                     """
@@ -340,13 +346,14 @@ class categoryObject(object):
                     elif "bgnorm" in uncertainty and (value == "x" or value == "X"):
                         value = bgnorm
                         print "changing value to", value
+
                     if not value is "-":
-                        if uncertainty in self[process]._uncertainties:
+                        if uncertainty in self[clear_procname]._uncertainties:
                             if self._debug >=30:
-                                print "DEBUG: setting {0} to \t{1} and \t{2} for process {3}".format(uncertainty,typ,value, process)
-                            self[process].set_uncertainty(syst=uncertainty,typ=typ,value=value)
+                                print "DEBUG: setting {0} to \t{1} and \t{2} for process {3}".format(uncertainty,typ,value, clear_procname)
+                            self[clear_procname].set_uncertainty(syst=uncertainty,typ=typ,value=value)
                         else:
-                            self[process].add_uncertainty(syst=uncertainty,typ=typ,value=value)
+                            self[clear_procname].add_uncertainty(syst=uncertainty,typ=typ,value=value)
                  
     """
     overloaded get, in and for operator to get better access to processes in 
@@ -384,6 +391,13 @@ class categoryObject(object):
         s = []
         s.append("Category Name:\t%s" % self._name)
         s.append("Default source file:\t%s" % self._default_file)
+        if self.observation:
+            oname = self.observation.name
+            ocount = str(self.observation.eventcount)
+        else:
+            oname = "Not set"
+            ocount = oname
+        s.append("Observations: %s (yield: %s)" % (oname, ocount))
         s.append("List of signal processes:")
         for sig in self._signalprocs:
             s.append("\t%s" % self._signalprocs[sig])
@@ -391,4 +405,7 @@ class categoryObject(object):
         s.append("List of background processes:")
         for bkg in self._bkgprocs:
             s.append("\t%s" % self._bkgprocs[bkg])
+        
+
         return "\n".join(s)
+
