@@ -10,6 +10,8 @@ class valueConventions(object):
 	def __init__(self):
 		
 		print "Initializing valueConventions"
+		self._allowed_types = ["lnN", "shape"]
+		self._debug = 99
 
 	def isfloat(self, value):
 		try:
@@ -35,3 +37,10 @@ class valueConventions(object):
 		if not is_good: 
 			print "Given value not suitable for an uncertainty in a datacard!"
 		return is_good
+
+	def is_allowed_type(self, typ):
+		if typ in self._allowed_types:
+			return True
+		if self._debug >= 99:
+			print "ERROR: Uncertainty type '%s' is not allowed"
+		return False
