@@ -65,76 +65,55 @@ class processObject(object):
     #getter/setter for yields
     @property
     def eventcount(self):
-        return self.get_yield()
-    @eventcount.setter
-    def eventcount(self, val):
-        self.set_yield(val)
-
-    def set_yield(self, val):
-        """
-        set yield for processes to value val
-        """
-        self._eventcount = val
-        
-    def get_yield(self):
         """
         get yield for process
         """
         y = self._eventcount
         if self._debug >= 99:
             print "returning yield of", y
-        return y
+        return y 
+
+    @eventcount.setter
+    def eventcount(self, val):
+        """
+        set yield for processes to value val
+        """
+        self._eventcount = val
 
     #logic for process name
     @property
     def name(self):
-        return self.get_name()
+        """
+        get name for process
+        """
+        return self._name
     @name.setter
     def name(self, s):
-        if self._debug >= 99: 
-            print "entered setter for name"
-        self.set_name(s)
-
-    
-    def set_name(self, name):
         """
         set process name
         """
         if self._debug >= 20: 
             print "setting name to", name
         self._name = name
-        
-    def get_name(self):
-        """
-        create copy of process name
-        """
-        s = self._name
-        return s
+
+
 
     @property
     def category(self):
-        return self.get_category()
-
-    @category.setter
-    def category(self, catname):
-        if self._debug >= 99: 
-            print "entered setter for category"
-        self.set_category(catname)
-        # self._categoryname = catname
-    
-    def get_category(self):
         """
         get name for category to which this process belongs to
         """
         return self._categoryname
 
-    def set_category(self, catname):
+    @category.setter
+    def category(self, catname):
         """
         set name for category to which this process belongs to
         """
         if self._debug >= 20: 
             print "setting category to", catname
         self._categoryname = catname
+    
 
     @property
     def file(self):
@@ -188,41 +167,12 @@ class processObject(object):
     @property
     def uncertainties(self):
         return list(self._uncertainties.keys())
-
-    def __str__(self):
-        """
-        current setup: print delivers:
-            - process name
-            - process yield
-            - list of nuisance parameters
-        """
-        s = []
-        s.append("Process infos:")
-        s.append("\tname:\t%s" % self.get_name())
-        s.append("\tcategory:\t%s" % self.get_category())
-        s.append("\trootfile:\t%s" % self._file_handler.filepath)
-        s.append("\tnominal histname:\t%s" % self._nominalhistname)
-        s.append("\tsystematic histname:\t%s" % self._systkey)
-        s.append("\tyield:\t{0}".format(self._eventcount))
-        if len(self._uncertainties) != 0:
-            s.append("\tlist of uncertainties:")
-
-            temp = "\t\t%s" %  "uncertainty".ljust(15)
-            temp += "\t%s" % "type".ljust(10)
-            temp += "\t%s" % "correlation".ljust(15)
-            s.append(temp)
-            s.append("\t\t"+"_"*len(temp.expandtabs()))
-        for syst in self._uncertainties:
-            temp = "\t\t%s" % syst.ljust(15)
-            temp += "\t%s" % self._uncertainties[syst]["type"].ljust(10)
-            temp += "\t%s" % str(self._uncertainties[syst]["value"]).ljust(15)
-            s.append(temp)
-        return "\n".join(s)     
+     
 
     def add_uncertainty(self, syst, typ, value):
         """
         add an uncertainty to this process. This function checks
-        - whether there already is an entry for 'systname'
+        - whether there already is an entry for 'systematicName'
         - the given value is suitable for a datacard 
             (see valueConventions.is_good_systval)
         and only adds the systematics if it's new and has a good value
@@ -230,10 +180,16 @@ class processObject(object):
         
         if isinstance(syst, str) and isinstance(typ, str):
             if not syst in self._uncertainties:
-                if typ == "shape":
+                if not self._value_rules.is_allowed_type(typ=typ):
+                    return False
+                if typ is "shape":
+                    tmp = syst
+                    if syst.startswith("#"):
+                        tmp = tmp.replace("#","")
+                        tmp = tmp.strip()
                     print "Looking for varied histograms for systematic", syst
                     keys = self._id_logic.build_systematic_histo_names(
-                            systematic_name = syst, base_key = self._systkey)
+                            systematic_name = tmp, base_key = self._systkey)
                     if not all(self._file_handler.histogram_exists(k) for k in keys):
                         return False
                 if self._value_rules.is_good_systval(value):
@@ -255,42 +211,113 @@ class processObject(object):
         return False
 
 
-    def set_uncertainty(self, systname, typ, value):
+    def set_uncertainty(self, systematicName, typ, value):
         """
-        set the uncertainty 'systname' for this process to type 'typ' 
+        set the uncertainty 'systematicName' for this process to type 'typ' 
         and value 'value'. This function checks
-        - whether there is an entry for 'systname' in the first place
+        - whether there is an entry for 'systematicName' in the first place
         - the given value is suitable for a datacard (see 'is_good_systval')
         and only adds the systematics if there is an entry and the value is good
         """
-        if systname in self._uncertainties:
+        if systematicName in self._uncertainties:
             if self._value_rules.is_good_systval(value):
-                self._uncertainties[systname]["value"] = str(value)
-                self._uncertainties[systname]["type"] = typ
+                self._uncertainties[systematicName]["value"] = str(value)
+                self._uncertainties[systematicName]["type"] = typ
         else:
-            s = "There is no entry for uncertainty %s" % systname
+            s = "There is no entry for uncertainty %s" % systematicName
             s += " in process %s! Please add it first" % self.get_name()
             print s
 
-    def get_uncertainty_value(self, systname):
+    def delete_uncertainty(self,systematicName):
+        if systematicName in self._uncertainties:
+            del self._uncertainties[systematicName]
+            if self._debug>30:
+                temp= "DEBUG: deleted uncertainty %s in process %s" % (systematicName,self.name)
+                if not self.category=="":
+                    temp+=" in category %s" % self.category
+                print "".join(temp)
+
+
+        else:
+            print "ERROR: uncertainty %s not in process %s" % (systematicName,self.name)
+        
+
+    def delete_uncertainties(self,list_of_systnames):
+        for systematic in list_of_systnames:
+            self.delete_uncertainty(systematicName=systematic)
+
+
+    def get_uncertainty_value(self, systematicName):
         """
-        return correlation of uncertainty 'systname' with this process.
-        If there is no entry for 'systname' in this process, the function 
+        return correlation of uncertainty 'systematicName' with this process.
+        If there is no entry for 'systematicName' in this process, the function 
         returns '-'
         """
-        if systname in self._uncertainties:
-            return self._uncertainties[systname]["value"]
+        if systematicName in self._uncertainties:
+            return self._uncertainties[systematicName]["value"]
         else:
             return "-"
 
-    def get_uncertainty_type(self, systname):
+    def get_uncertainty_type(self, systematicName):
         """
-        return type of uncertainty 'systname' in this process.
-        If there is no entry for 'systname' in this process, the function 
+        return type of uncertainty 'systematicName' in this process.
+        If there is no entry for 'systematicName' in this process, the function 
         returns ''
         """
-        if systname in self._uncertainties:
-            return self._uncertainties[systname]["type"]
+        if systematicName in self._uncertainties:
+            return self._uncertainties[systematicName]["type"]
         else:
 
             return ""
+
+    def __str__(self):
+        """
+        current setup: print delivers:
+            - process name
+            - process yield
+            - list of nuisance parameters
+        """
+        s = []
+        s.append("Process infos:")
+        s.append("\tname:\t%s" % self.name)
+        s.append("\tcategory:\t%s" % self.category)
+        s.append("\trootfile:\t%s" % self._file_handler.filepath)
+        s.append("\tnominal histname:\t%s" % self._nominalhistname)
+        s.append("\tsystematic histname:\t%s" % self._systkey)
+        s.append("\tyield:\t{0}".format(self._eventcount))
+        if len(self._uncertainties) != 0:
+            s.append("\tlist of uncertainties:")
+
+            temp = "\t\t%s" %  "uncertainty".ljust(15)
+            temp += "\t%s" % "type".ljust(10)
+            temp += "\t%s" % "correlation".ljust(15)
+            s.append(temp)
+            s.append("\t\t"+"_"*len(temp.expandtabs()))
+        for syst in self._uncertainties:
+            temp = "\t\t%s" % syst.ljust(15)
+            temp += "\t%s" % self._uncertainties[syst]["type"].ljust(10)
+            temp += "\t%s" % str(self._uncertainties[syst]["value"]).ljust(15)
+            s.append(temp)
+        return "\n".join(s)
+
+    """
+    overloaded get, in and for operator to get better access to systematics in 
+    process object:
+    self[systematicName]
+    """
+
+    def __getitem__(self, systematicName):
+        if systematicName in self._uncertainties:
+            return self._uncertainties[systematicName]
+        else:
+            print "ERROR: Process not in Category!"
+
+    def __iter__(self):
+        all_uncertainties=self._uncertainties
+        return all_uncertainties.__iter__()
+
+    def __contains__(self, systematicName):
+        if systematicName in self._uncertainties:
+            return True
+        else:
+            return False
