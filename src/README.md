@@ -1,12 +1,12 @@
 # datacardMaker src
 classes for object-oriented datacard maker
 
-- datacardMaker.py: Wrapper to automatically create data cards from category/process/systematic objects
-	- a datacard maker object is able to have multiple categories with multiple processes with corresponding systematics
+- datacardMaker.py: Wrapper to automatically create data cards from analysis objects
+	- write Datacard with write_datacard()
+- analysisObject.py: Container for categoryObjects
+	- an analysis object is able to have multiple categories with multiple processes with corresponding systematics
 	- uses category, process and systematic objects
 	- add category with add_category()
-	- write Datacard with write_datacard()
-	- read Datacard with load_from_file()
 - categoryObject.py: object for categories
 	- a category has multiple processes with a number of systematic uncertainties
 	- categoryObject knows generic keys for files and histogram names for data and uncertainties
