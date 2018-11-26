@@ -252,9 +252,12 @@ class analysisObject(object):
                         pass
                     elif "autoMCStats" in line:
                         autoMCStats_lines.append(line)
-                    elif line.split()[1] is "group":
-                        group_lines.append(line)
+                    elif len(line)>=2:
+                        if line.split()[1] is "group":
+                            group_lines.append(line)
                     elif line.startswith("#"):
+                        pass
+                    elif not line.strip():
                         pass
                     else:
                         systematic_lines.append(line)
@@ -293,7 +296,7 @@ class analysisObject(object):
             """
             handles autoMCstats
             """
-            self._load_from_datacard_add_autoMCStats(autoMCStats_lines=autoMCStats_lines)
+            self._load_from_datacard_add_autoMCStats(autoMCstats_lines=autoMCStats_lines)
             """
             reads groups
             """
