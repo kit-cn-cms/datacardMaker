@@ -15,6 +15,7 @@ class analysisObject(object):
     def init_variables(self):
         self._categories        = {}
         self._systematics       = {}
+        self._groups            = {}
 
     def __init__(   self, pathToDatacard = "", 
                     processIdentifier = "$PROCESS",
@@ -289,6 +290,14 @@ class analysisObject(object):
             """
             self._load_from_datacard_add_systematics(list_of_categories=categoryprocesses,
                 list_of_processes=processes,list_of_systematics=systematic_lines)
+            """
+            handles autoMCstats
+            """
+            self._load_from_datacard_add_autoMCStats(autoMCStats_lines=autoMCStats_lines)
+            """
+            reads groups
+            """
+            self._load_from_datacard_add_groups(list_of_groups=group_lines)
 
             
              
@@ -382,6 +391,31 @@ class analysisObject(object):
                 if value!="-":
                     self._categories[category][process].add_uncertainty( syst = sys,
                                                             typ = typ, value = value)
+
+    def _load_from_datacard_add_autoMCStats(self,autoMCstats_lines):
+        for line in autoMCstats_lines:
+            line_entries    = line.split()
+            process_name    = line_entries[0]
+            threshold       = line_entries[2]
+            include_signal  = line_entries[3]
+            hist_mode       = line_entries[4]
+            for category in self._categories:
+                if process_name in self._categories[category]:
+                    process = self._categories[category][process]
+                    process.autoMCstats                 = True
+                    process.autoMCstats_threshold       = threshhold
+                    process.autoMCstats_include_signal  = include_signal 
+                    process.autoMCstats_hist_mode       = hist_mode
+
+
+    def _load_from_datacard_add_groups(self,list_of_groups):
+        for group in list_of_groups:
+            group_entries = group.split()
+            group_name=group_entries[0]+group_entries[1]
+            group_entries.pop(2)
+            group_entries.pop(1)
+            group_entries.pop(0)
+            self._groups[group_name]=group_entries
 
     """
     Function to add processes to analysisObject from CSV File
