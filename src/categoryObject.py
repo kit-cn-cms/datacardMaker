@@ -351,7 +351,7 @@ class categoryObject(object):
                         if uncertainty in self[clear_procname]._uncertainties:
                             if self._debug >=30:
                                 print "DEBUG: setting {0} to \t{1} and \t{2} for process {3}".format(uncertainty,typ,value, clear_procname)
-                            self[clear_procname].set_uncertainty(syst=uncertainty,typ=typ,value=value)
+                            self[clear_procname].set_uncertainty(systematicName=uncertainty,typ=typ,value=value)
                         else:
                             self[clear_procname].add_uncertainty(syst=uncertainty,typ=typ,value=value)
                  

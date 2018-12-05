@@ -167,6 +167,7 @@ class analysisObject(object):
         if isinstance(systematic,list):
             self.delete_uncertainties_for_all_processes(list_of_systematics=systematic)
         elif isinstance(systematic,str):
+            print "deleting %s in all processes" % systematic
             for category in self._categories:
                 for process in self._categories[category]:
                     self._categories[category][process].delete_uncertainty(systematicName=systematic)
