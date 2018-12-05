@@ -15,9 +15,10 @@ class datacardMaker(object):
     _debug = 200
     def init_variables(self):
         self._block_separator   = "\n" + "-"*130 + "\n"
-        
+        self._hardcode_numbers = True
+        self._replace_files = False
 
-    def __init__(   self, analysis,
+    def __init__(   self, analysis = None,
                     outputpath = "", replacefiles=False,
                     hardcodenumbers=False):
         self.init_variables()
@@ -27,7 +28,8 @@ class datacardMaker(object):
             self.hardcode_numbers = hardcodenumbers
         if outputpath:
             self.outputpath = outputpath
-            self.write_datacard(analysis)
+            if analysis:
+                self.write_datacard(analysis)
 
 
     @property
@@ -169,7 +171,8 @@ class datacardMaker(object):
 
         header.append("imax {0} number of bins".format(number_categories))
         header.append("jmax {0} number of processes minus 1".format(number_processes))
-        header.append("kmax {0} number of nuisance parameters".format(number_systematics))
+        # header.append("kmax {0} number of nuisance parameters".format(number_systematics))
+        header.append("kmax * number of nuisance parameters")
         return "\n".join(header)
 
     def get_number_of_procs(self,analysis):
@@ -276,6 +279,7 @@ class datacardMaker(object):
                 keynames.append(process.file)
                 keynames.append(process.key_nominal_hist)
                 keynames.append(process.key_systematic_hist)
+        keynames = [x for x in keynames if x != "" and not x is None]
         print keynames
         return len(max(keynames,key=len))
 
@@ -415,7 +419,8 @@ class datacardMaker(object):
     def get_max_size(self,liste):
         templiste=[]
         for element in liste:
-            templiste.append(max(element,key=len))
+            if not len(element) == 0:
+                templiste.append(max(element,key=len))
         return len(max(templiste,key=len))
 
 
