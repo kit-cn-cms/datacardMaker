@@ -22,7 +22,7 @@ class processObject(object):
         self._systkey = ""
         self._eventcount = -1
         self._uncertainties = {}
-        self._debug = 100
+        self._debug = 0
         self._calculate_yield = False
 
 
@@ -37,9 +37,10 @@ class processObject(object):
         if not pathToRootfile is None:
             self.file = pathToRootfile
         if not nominal_hist_key is None:
-            print "-"*130
-            print "DEBUG PROCESSOBJECT INIT: setting key_nominal_hist to", nominal_hist_key
-            print "-"*130
+            if self._debug>=30:
+                print "-"*130
+                print "DEBUG PROCESSOBJECT INIT: setting key_nominal_hist to", nominal_hist_key
+                print "-"*130
             self.key_nominal_hist   = nominal_hist_key
         
         #if self._calculate_yield:
@@ -139,12 +140,14 @@ class processObject(object):
                 self._nominalhistname = hname
                 self._eventcount = self._file_handler.get_integral(hname)
         else:
-            print "-"*130
-            print "DEBUG PROCESSOBJECT key_nominal_hist setter: detected generic key"
-            print "-"*130
+            if self._debug>=30:
+                print "-"*130
+                print "DEBUG PROCESSOBJECT key_nominal_hist setter: detected generic key"
+                print "-"*130
             hist = self._id_logic.build_nominal_histo_name(process_name = self._name, base_key = hname, 
                 channel_name = self._categoryname)
-            print hist
+            if self._debug>=30:
+                print hist
             if self._file_handler.histogram_exists(histname = hist):
                 self._nominalhistname = hist
                 self._eventcount = self._file_handler.get_integral(hist)
@@ -187,7 +190,8 @@ class processObject(object):
                     if syst.startswith("#"):
                         tmp = tmp.replace("#","")
                         tmp = tmp.strip()
-                    print "Looking for varied histograms for systematic", syst
+                    if self._debug>=30:
+                        print "Looking for varied histograms for systematic", syst
                     keys = self._id_logic.build_systematic_histo_names(
                             systematic_name = tmp, base_key = self._systkey)
                     if not all(self._file_handler.histogram_exists(k) for k in keys):

@@ -12,7 +12,7 @@ from processObject import processObject
 from systematicObject import systematicObject
 
 class datacardMaker(object):
-    _debug = 200
+    _debug = 0
     def init_variables(self):
         self._block_separator   = "\n" + "-"*130 + "\n"
         self._hardcode_numbers = True
@@ -257,8 +257,6 @@ class datacardMaker(object):
         s+= "%s" %(file).ljust(sizekeys)
         s+= "%s" %(nominal_key).ljust(sizekeys)
         s+= "%s" %(syst_key).ljust(sizekeys)
-
-        print s
         return s
 
     def write_keyword_generic_lines(self, category, size, sizekeys):
@@ -289,7 +287,6 @@ class datacardMaker(object):
                 keynames.append(process.key_nominal_hist)
                 keynames.append(process.key_systematic_hist)
         keynames = [x for x in keynames if x != "" and not x is None]
-        print keynames
         return len(max(keynames,key=len))
 
 
@@ -457,12 +454,12 @@ class datacardMaker(object):
                 if self._debug >= 99:
                     print "Category:", category_name
                 for signal_process in sorted(category.signal_processes):
-                    if self._debug>=00:
+                    if self._debug>=90:
                         print signal_process
                     temp += "%s" % str(analysis.systematics[systematic].get_correlation_raw(process_name=signal_process,
                                                                               category_name=category_name)).ljust(size)   
                 for bkg_process in sorted(category.background_processes):
-                    if self._debug>=00:
+                    if self._debug>=90:
                         print bkg_process
                     temp += "%s" % str(analysis.systematics[systematic].get_correlation_raw(process_name=bkg_process,
                                                                              category_name=category_name)).ljust(size)

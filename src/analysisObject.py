@@ -12,7 +12,7 @@ from systematicObject import systematicObject
 from valueConventions import valueConventions
 
 class analysisObject(object):
-    _debug = 200
+    _debug = 0
     _value_rules = valueConventions()
     def init_variables(self):
         self._categories        = {}
@@ -131,7 +131,7 @@ class analysisObject(object):
         If no list of file and key names is handed over, it uses the default information 
         of the category object in the categoryObject to initialize a process.
         """
-        if self._debug>100:
+        if self._debug>=90:
             print key_nominal_hist
             print key_systematic_hist
         

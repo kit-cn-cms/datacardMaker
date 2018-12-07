@@ -22,7 +22,7 @@ class identificationLogic(object):
                                      , e.g. $SYSTEMATIC
                                      (member variable: _systIden)
     """
-    _debug = 100
+    _debug = 0
     _allowed_dependencies = ["process", "channel"]
     def init_variables(self):
         """
@@ -66,11 +66,11 @@ class identificationLogic(object):
         return self._generic_nom_key
     @generic_nominal_key.setter
     def generic_nominal_key(self, key):
-        if not self._procIden in key and self._debug >= 3:
+        if not self._procIden in key and self._debug >= 30:
             s = "WARNING: process identification keyword '%s'" % self._procIden
             s+= " is not part of new nominal key '%s'!" % key
             print s
-        if not self._chIden in key and self._debug >= 3:
+        if not self._chIden in key and self._debug >= 30:
             s = "WARNING: channel identification keyword '%s'" % self._chIden
             s+= " is not part of new nominal key '%s'!" % key
             print s
@@ -81,15 +81,15 @@ class identificationLogic(object):
         return self._generic_syst_key
     @generic_systematics_key.setter
     def generic_systematics_key(self, key):
-        if not self._procIden in key:
+        if not self._procIden in key and self._debug >= 30:
             s = "WARNING: process identification keyword '%s'" % self._procIden
             s+= " is not part of new systematics key '%s'!" % key
             print s
-        if not self._chIden in key:
+        if not self._chIden in key and self._debug >= 30:
             s = "WARNING: channel identification keyword '%s'" % self._chIden
             s+= " is not part of new systematics key '%s'!" % key
             print s
-        if not self._systIden in key:
+        if not self._systIden in key and self._debug >= 30:
             s = "WARNING: systematics ID keyword '%s'" % self._procIden
             s+= " is not part of new systematics key '%s'!" % key
             print s
@@ -132,17 +132,19 @@ class identificationLogic(object):
         """
         build a key from 'base_key' for a specific channel 'channel_name'.
         """
-        print "-"*130
-        print "DEBUG Identification_logic INSERT_CHANNEL: entering function"
-        print "-"*130
+        if self._debug >= 90:
+            print "-"*130
+            print "DEBUG Identification_logic INSERT_CHANNEL: entering function"
+            print "-"*130
         if base_key is None or base_key == "":
             print "unsuitable base_key!"
             return ""
         print channel_name
         if not channel_name == "" and not channel_name is None:
-            print "-"*130 
-            print base_key
-            print "-"*130
+            if self._debug >= 90:
+                print "-"*130 
+                print base_key
+                print "-"*130
             if self._chIden in base_key:
                 s = base_key.replace(self._chIden, channel_name)
                 if self._debug >= 30:
@@ -186,10 +188,12 @@ class identificationLogic(object):
             base_key = self._generic_nom_key
         key = self.insert_process(  process_name=process_name,
                                     base_key = base_key)
-        print "DEBUG: Identification_logic - build_nominal_histo_name : key =", key
+        if self._debug >= 90:
+            print "DEBUG: Identification_logic - build_nominal_histo_name : key =", key
         key = self.insert_channel(  channel_name = channel_name, 
                                     base_key = key)
-        print "DEBUG: Identification_logic - build_nominal_histo_name : key =", key
+        if self._debug >= 90:
+            print "DEBUG: Identification_logic - build_nominal_histo_name : key =", key
         return key
 
     def build_systematic_histo_name_down(   self, process_name = "",
