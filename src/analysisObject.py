@@ -9,12 +9,15 @@ if not directory in sys.path:
 from categoryObject import categoryObject
 from processObject import processObject
 from systematicObject import systematicObject
+from valueConventions import valueConventions
 
 class analysisObject(object):
     _debug = 200
+    _value_rules = valueConventions()
     def init_variables(self):
         self._categories        = {}
         self._systematics       = {}
+        self._groups            = {}
 
     def __init__(   self, pathToDatacard = "", 
                     processIdentifier = "$PROCESS",
@@ -38,6 +41,29 @@ class analysisObject(object):
         get dictionary of categories for the analysisObject
         """
         return self._categories
+
+    @property
+    def signalprocesses_names(self):
+        sigprc=[]
+        for category in self._categories:
+            temp=self._categories[category].signal_processes
+            for proc in temp:
+                if proc not in sigprc:
+                    sigprc.append(proc)
+                
+        return sigprc
+
+    @property
+    def backgroundprocesses_names(self):
+        bkgprc=[]
+        for category in self._categories:
+            temp=self._categories[category].background_processes
+            for proc in temp:
+                if proc not in bkgprc:
+                    bkgprc.append(proc)
+                
+        return bkgprc
+    
 
     def add_category(self, category):
         """
@@ -252,12 +278,17 @@ class analysisObject(object):
                         pass
                     elif "autoMCStats" in line:
                         autoMCStats_lines.append(line)
-                    elif line.split()[1] is "group":
-                        group_lines.append(line)
+                    elif len(line)>=2:
+                        if line.split()[1] in self._value_rules.allowed_types:
+                            systematic_lines.append(line)
+                        elif line.split()[1] is "group":
+                            group_lines.append(line)
                     elif line.startswith("#"):
                         pass
-                    else:
-                        systematic_lines.append(line)
+                    elif not line.strip():
+                        pass
+                    # else:
+                    #     systematic_lines.append(line)
             """
             Create categoryObject for each category
             first cleanup lines
@@ -290,6 +321,14 @@ class analysisObject(object):
             """
             self._load_from_datacard_add_systematics(list_of_categories=categoryprocesses,
                 list_of_processes=processes,list_of_systematics=systematic_lines)
+            """
+            handles autoMCStats
+            """
+            self._load_from_datacard_add_autoMCStats(autoMCstats_lines=autoMCStats_lines)
+            """
+            reads groups
+            """
+            self._load_from_datacard_add_groups(list_of_groups=group_lines)
 
             
              
@@ -383,6 +422,29 @@ class analysisObject(object):
                 if value!="-":
                     self._categories[category][process].add_uncertainty( syst = sys,
                                                             typ = typ, value = value)
+
+    def _load_from_datacard_add_autoMCStats(self,autoMCstats_lines):
+        for line in autoMCstats_lines:
+            line_entries    = line.split()
+            category_name   = line_entries[0]
+            threshold       = line_entries[2]
+            include_signal  = line_entries[3]
+            hist_mode       = line_entries[4]
+            if category_name in self._categories:
+                category = self._categories[category_name]
+                category.autoMCStats                 = True
+                category.autoMCStats_threshold       = threshold
+                category.autoMCStats_include_signal  = include_signal 
+                category.autoMCStats_hist_mode       = hist_mode
+
+    def _load_from_datacard_add_groups(self,list_of_groups):
+        for group in list_of_groups:
+            group_entries = group.split()
+            group_name=group_entries[0]+group_entries[1]
+            group_entries.pop(2)
+            group_entries.pop(1)
+            group_entries.pop(0)
+            self._groups[group_name]=group_entries
 
     """
     Function to add processes to analysisObject from CSV File
