@@ -398,18 +398,16 @@ class analysisObject(object):
     def _load_from_datacard_add_autoMCStats(self,autoMCstats_lines):
         for line in autoMCstats_lines:
             line_entries    = line.split()
-            process_name    = line_entries[0]
+            category_name   = line_entries[0]
             threshold       = line_entries[2]
             include_signal  = line_entries[3]
             hist_mode       = line_entries[4]
-            for category in self._categories:
-                if process_name in self._categories[category]:
-                    process = self._categories[category][process]
-                    process.autoMCstats                 = True
-                    process.autoMCstats_threshold       = threshhold
-                    process.autoMCstats_include_signal  = include_signal 
-                    process.autoMCstats_hist_mode       = hist_mode
-
+            if category_name in self._categories:
+                category = self._categories[category]
+                category.autoMCstats                 = True
+                category.autoMCstats_threshold       = threshhold
+                category.autoMCstats_include_signal  = include_signal 
+                category.autoMCstats_hist_mode       = hist_mode
 
     def _load_from_datacard_add_groups(self,list_of_groups):
         for group in list_of_groups:

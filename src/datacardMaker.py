@@ -459,6 +459,10 @@ class datacardMaker(object):
             lines.append(temp)
        	return "\n".join(lines)
 
+
+    def create_autoMCStats_block(self,analysis):
+        pass
+
     
 
     
