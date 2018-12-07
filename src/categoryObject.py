@@ -19,10 +19,10 @@ class categoryObject(object):
         self._key_creator = identificationLogic()
         self._key_creator.belongs_to = "channel"
         self._default_file = None
-        self._autoMCstats = False
-        self._autoMCstats_threshold = 5
-        self._autoMCstats_include_signal = 0
-        self._autoMCstats_hist_mode = 1
+        self._autoMCStats = False
+        self._autoMCStats_threshold = 5
+        self._autoMCStats_include_signal = 0
+        self._autoMCStats_hist_mode = 1
     
     def __init__(   self, categoryName=None, defaultRootFile=None, 
                     defaultnominalkey=None,
@@ -153,41 +153,41 @@ class categoryObject(object):
     get and set flag for autoMCstats
     """
     @property
-    def autoMCstats(self):
-        return self._autoMCstats
-    @autoMCstats.setter
-    def autoMCstats(self, flag):
-        self._autoMCstats=flag
+    def autoMCStats(self):
+        return self._autoMCStats
+    @autoMCStats.setter
+    def autoMCStats(self, flag):
+        self._autoMCStats=flag
 
     """
     get and set value for autoMCstats threshold
     """   
     @property
-    def autoMCstats_threshold(self):
-        return self._autoMCstats_threshold
-    @autoMCstats_threshold.setter
-    def autoMCstats_threshold(self, value):
-        self._autoMCstats_threshold = value
+    def autoMCStats_threshold(self):
+        return self._autoMCStats_threshold
+    @autoMCStats_threshold.setter
+    def autoMCStats_threshold(self, value):
+        self._autoMCStats_threshold = value
 
     """
-    get and set signal include for autoMCstats
+    get and set signal include for autoMCStats
     """   
     @property
-    def autoMCstats_include_signal(self):
-        return self._autoMCstats_include_signal
-    @autoMCstats_include_signal.setter
-    def autoMCstats_include_signal(self, value):
-        self._autoMCstats_include_signal = value
+    def autoMCStats_include_signal(self):
+        return self._autoMCStats_include_signal
+    @autoMCStats_include_signal.setter
+    def autoMCStats_include_signal(self, value):
+        self._autoMCStats_include_signal = value
 
     """
-    get and set hist mode for autoMCstats
+    get and set hist mode for autoMCStats
     """   
     @property
-    def autoMCstats_hist_mode(self):
-        return self._autoMCstats_hist_mode
-    @autoMCstats_hist_mode.setter
-    def autoMCstats_hist_mode(self, value):
-        self._autoMCstats_hist_mode = value
+    def autoMCStats_hist_mode(self):
+        return self._autoMCStats_hist_mode
+    @autoMCStats_hist_mode.setter
+    def autoMCStats_hist_mode(self, value):
+        self._autoMCStats_hist_mode = value
     
 
     def create_signal_process( self, processName, rootfile = None, histoname = None, 
