@@ -42,6 +42,29 @@ class analysisObject(object):
         """
         return self._categories
 
+    @property
+    def signalprocesses_names(self):
+        sigprc=[]
+        for category in self._categories:
+            temp=self._categories[category].signal_processes
+            for proc in temp:
+                if proc not in sigprc:
+                    sigprc.append(proc)
+                
+        return sigprc
+
+    @property
+    def backgroundprocesses_names(self):
+        bkgprc=[]
+        for category in self._categories:
+            temp=self._categories[category].background_processes
+            for proc in temp:
+                if proc not in bkgprc:
+                    bkgprc.append(proc)
+                
+        return bkgprc
+    
+
     def add_category(self, category):
         """
         Adds a category object

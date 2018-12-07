@@ -110,10 +110,17 @@ class categoryObject(object):
     @property
     def signal_processes(self):
         return self._signalprocs
-
+    @property
+    def list_of_signal_processes(self):
+        return sorted(self._signalprocs.keys())
+    
     @property
     def background_processes(self):
         return self._bkgprocs
+
+    @property
+    def list_of_background_processes(self):
+        return sorted(self._bkgprocs.keys())
 
     @property
     def process_list(self):
