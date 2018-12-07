@@ -17,6 +17,8 @@ class datacardMaker(object):
         self._block_separator   = "\n" + "-"*130 + "\n"
         self._hardcode_numbers = True
         self._replace_files = False
+        self._autoMCStats=False
+        self._template_autoMCStats = "%(CATEGORY)s autoMCStats %(THRESHOLD)s %(SIGNAL)s %(HISTMODE)s"
 
     def __init__(   self, analysis = None,
                     outputpath = "", replacefiles=False,
@@ -133,6 +135,13 @@ class datacardMaker(object):
         content.append(self.create_process_block(analysis=analysis))
         content.append(self.create_systematics_block(analysis=analysis))
         
+        """
+        creates block for autoMCstats
+        """
+        autoMCstats_block=self.create_autoMCStats_block(analysis=analysis)
+        if self._autoMCStats:
+            content.append(autoMCstats_block)
+
         return self._block_separator.join(content)
             
 
@@ -466,7 +475,23 @@ class datacardMaker(object):
 
 
     def create_autoMCStats_block(self,analysis):
-        pass
+        lines = []
+
+        for category in analysis:
+            if analysis[category].autoMCStats:
+                temp= self._template_autoMCStats % ({
+                    "CATEGORY"  : category,
+                    "THRESHOLD" : str(analysis[category].autoMCStats_threshold),
+                    "SIGNAL"    : str(analysis[category].autoMCStats_include_signal),
+                    "HISTMODE"  : str(analysis[category].autoMCStats_hist_mode)
+                    })
+                lines.append(temp)
+        if lines:
+            self._autoMCStats = True
+            return "\n".join(lines)
+        return False
+
+
 
     
 
