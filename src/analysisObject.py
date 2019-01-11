@@ -230,7 +230,7 @@ class analysisObject(object):
     """
     Function to create analysisObject from datacard
     """
-    def load_from_datacard(self, pathToDatacard):
+    def load_from_datacard(self, pathToDatacard,ReadSystematics=True):
         """
         Reads datacard from datacard. Creates categoryObjects for each category 
         and processObjects for the corresponding processes. 
@@ -319,16 +319,17 @@ class analysisObject(object):
             """
             adds systematics to processes
             """
-            self._load_from_datacard_add_systematics(list_of_categories=categoryprocesses,
-                list_of_processes=processes,list_of_systematics=systematic_lines)
-            """
-            handles autoMCStats
-            """
-            self._load_from_datacard_add_autoMCStats(autoMCstats_lines=autoMCStats_lines)
-            """
-            reads groups
-            """
-            self._load_from_datacard_add_groups(list_of_groups=group_lines)
+            if ReadSystematics:
+                self._load_from_datacard_add_systematics(list_of_categories=categoryprocesses,
+                    list_of_processes=processes,list_of_systematics=systematic_lines)
+                """
+                handles autoMCStats
+                """
+                self._load_from_datacard_add_autoMCStats(autoMCstats_lines=autoMCStats_lines)
+                """
+                reads groups
+                """
+                self._load_from_datacard_add_groups(list_of_groups=group_lines)
 
             
              
@@ -342,6 +343,7 @@ class analysisObject(object):
         key logic wont be working cause channels will be numerated
         original name in Combination line
         """
+        #self._excess_categories=[]
         for shapelines in list_of_shapelines:
             shape = shapelines.split()
             category_name   = shape[2]
@@ -358,6 +360,8 @@ class analysisObject(object):
                 self.create_category(categoryName=category_name,
                         default_file=file,generic_key_systematic_hist=systname,
                         generic_key_nominal_hist=histname)
+            #else:
+            #	self._excess_categories.append(category_name)
         for category in list_of_categories:
             if not category in self._categories:
                 self._categories[categoryName]=categoryObject(categoryName=category)

@@ -139,7 +139,6 @@ class identificationLogic(object):
         if base_key is None or base_key == "":
             print "unsuitable base_key!"
             return ""
-        print channel_name
         if not channel_name == "" and not channel_name is None:
             if self._debug >= 90:
                 print "-"*130 
