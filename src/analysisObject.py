@@ -350,12 +350,14 @@ class analysisObject(object):
             file            = shape[3]
             histname        = shape[4]
             systname        = shape[5]
-            if category_name is"*" and process_name is "*":
+            if category_name == "*" and process_name == "*":
+                print "DEBUG"
                 for category in list_of_categories:
                     self.create_category(categoryName=category,
                     default_file=file,generic_key_systematic_hist=systname,
                     generic_key_nominal_hist=histname)
-            elif category_name in list_of_categories and process_name is "*":
+            elif category_name in list_of_categories and process_name == "*":
+                print "DEBUG1"
                 self.create_category(categoryName=category_name,
                         default_file=file,generic_key_systematic_hist=systname,
                         generic_key_nominal_hist=histname)
