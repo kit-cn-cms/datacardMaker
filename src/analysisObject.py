@@ -230,7 +230,7 @@ class analysisObject(object):
     """
     Function to create analysisObject from datacard
     """
-    def load_from_datacard(self, pathToDatacard,ReadSystematics=True):
+    def load_from_datacard(self, pathToDatacard,ReadSystematics=True,observation_Flag="data_obs"):
         """
         Reads datacard from datacard. Creates categoryObjects for each category 
         and processObjects for the corresponding processes. 
@@ -315,7 +315,7 @@ class analysisObject(object):
             """
             self._load_from_datacard_add_processes(list_of_categories=categoryprocesses,
                 list_of_processes=processes, list_of_processtypes=processtypes,
-                list_of_shapelines=shape_lines)
+                list_of_shapelines=shape_lines,observation_Flag=observation_Flag)
             """
             adds systematics to processes
             """
@@ -343,7 +343,6 @@ class analysisObject(object):
         key logic wont be working cause channels will be numerated
         original name in Combination line
         """
-        #self._excess_categories=[]
         for shapelines in list_of_shapelines:
             shape = shapelines.split()
             category_name   = shape[2]
@@ -360,15 +359,13 @@ class analysisObject(object):
                 self.create_category(categoryName=category_name,
                         default_file=file,generic_key_systematic_hist=systname,
                         generic_key_nominal_hist=histname)
-            #else:
-            #	self._excess_categories.append(category_name)
         for category in list_of_categories:
             if not category in self._categories:
                 self._categories[categoryName]=categoryObject(categoryName=category)
         
 
     def _load_from_datacard_add_processes(self,list_of_processes,list_of_categories,
-                                        list_of_processtypes,list_of_shapelines):
+                                        list_of_processtypes,list_of_shapelines,observation_Flag):
         """
         Adds processes to the corresponding categories.
         Initializes process with file and key information.
@@ -386,7 +383,7 @@ class analysisObject(object):
             of the datacard
             """
             for category,process,processtype in zip(list_of_categories,list_of_processes,list_of_processtypes):
-                if (category_name is category and process_name is process) or (category_name is "*" and process_name is process):
+                if (category_name == category and process_name == process) or (category_name == "*" and process_name == process):
                     if int(processtype)<=0:
                         self.create_signal_process(categoryName=category, 
                                         processName=process_name,file=file, 
@@ -396,6 +393,14 @@ class analysisObject(object):
                         self.create_background_process(categoryName=category, 
                                         processName=process_name, file=file, 
                                         key_nominal_hist=histname, key_systematic_hist=systname)
+            for category in self._categories:
+                if (category_name == category and process_name == observation_Flag) or (category_name == "*" and process_name == observation_Flag):
+                    temp_obs=processObject(processName=observation_Flag,pathToRootfile=file,nominal_hist_key = histname, systematic_hist_key = systname, 
+                                            categoryName = category)
+                    if self._debug>=30:
+                        print "DEBUG: adding observation:"
+                        print temp_obs
+                    self._categories[category].observation=temp_obs
         """
         if the process is not explicitly written in the file, 
         initialize process with the generic keys and default file
