@@ -12,7 +12,7 @@ from systematicObject import systematicObject
 from valueConventions import valueConventions
 
 class analysisObject(object):
-    _debug = 200
+    _debug = 0
     _value_rules = valueConventions()
     def init_variables(self):
         self._categories        = {}
@@ -131,7 +131,7 @@ class analysisObject(object):
         If no list of file and key names is handed over, it uses the default information 
         of the category object in the categoryObject to initialize a process.
         """
-        if self._debug>100:
+        if self._debug>=90:
             print key_nominal_hist
             print key_systematic_hist
         
@@ -230,7 +230,7 @@ class analysisObject(object):
     """
     Function to create analysisObject from datacard
     """
-    def load_from_datacard(self, pathToDatacard):
+    def load_from_datacard(self, pathToDatacard,ReadSystematics=True,observation_Flag="data_obs"):
         """
         Reads datacard from datacard. Creates categoryObjects for each category 
         and processObjects for the corresponding processes. 
@@ -315,20 +315,21 @@ class analysisObject(object):
             """
             self._load_from_datacard_add_processes(list_of_categories=categoryprocesses,
                 list_of_processes=processes, list_of_processtypes=processtypes,
-                list_of_shapelines=shape_lines)
+                list_of_shapelines=shape_lines,observation_Flag=observation_Flag)
             """
             adds systematics to processes
             """
-            self._load_from_datacard_add_systematics(list_of_categories=categoryprocesses,
-                list_of_processes=processes,list_of_systematics=systematic_lines)
-            """
-            handles autoMCStats
-            """
-            self._load_from_datacard_add_autoMCStats(autoMCstats_lines=autoMCStats_lines)
-            """
-            reads groups
-            """
-            self._load_from_datacard_add_groups(list_of_groups=group_lines)
+            if ReadSystematics:
+                self._load_from_datacard_add_systematics(list_of_categories=categoryprocesses,
+                    list_of_processes=processes,list_of_systematics=systematic_lines)
+                """
+                handles autoMCStats
+                """
+                self._load_from_datacard_add_autoMCStats(autoMCstats_lines=autoMCStats_lines)
+                """
+                reads groups
+                """
+                self._load_from_datacard_add_groups(list_of_groups=group_lines)
 
             
              
@@ -349,12 +350,14 @@ class analysisObject(object):
             file            = shape[3]
             histname        = shape[4]
             systname        = shape[5]
-            if category_name is"*" and process_name is "*":
+            if category_name == "*" and process_name == "*":
+                print "DEBUG"
                 for category in list_of_categories:
                     self.create_category(categoryName=category,
                     default_file=file,generic_key_systematic_hist=systname,
                     generic_key_nominal_hist=histname)
-            elif category_name in list_of_categories and process_name is "*":
+            elif category_name in list_of_categories and process_name == "*":
+                print "DEBUG1"
                 self.create_category(categoryName=category_name,
                         default_file=file,generic_key_systematic_hist=systname,
                         generic_key_nominal_hist=histname)
@@ -364,7 +367,7 @@ class analysisObject(object):
         
 
     def _load_from_datacard_add_processes(self,list_of_processes,list_of_categories,
-                                        list_of_processtypes,list_of_shapelines):
+                                        list_of_processtypes,list_of_shapelines,observation_Flag):
         """
         Adds processes to the corresponding categories.
         Initializes process with file and key information.
@@ -382,7 +385,7 @@ class analysisObject(object):
             of the datacard
             """
             for category,process,processtype in zip(list_of_categories,list_of_processes,list_of_processtypes):
-                if (category_name is category and process_name is process) or (category_name is "*" and process_name is process):
+                if (category_name == category and process_name == process) or (category_name == "*" and process_name == process):
                     if int(processtype)<=0:
                         self.create_signal_process(categoryName=category, 
                                         processName=process_name,file=file, 
@@ -392,6 +395,14 @@ class analysisObject(object):
                         self.create_background_process(categoryName=category, 
                                         processName=process_name, file=file, 
                                         key_nominal_hist=histname, key_systematic_hist=systname)
+            for category in self._categories:
+                if (category_name == category and process_name == observation_Flag) or (category_name == "*" and process_name == observation_Flag):
+                    temp_obs=processObject(processName=observation_Flag,pathToRootfile=file,nominal_hist_key = histname, systematic_hist_key = systname, 
+                                            categoryName = category)
+                    if self._debug>=30:
+                        print "DEBUG: adding observation:"
+                        print temp_obs
+                    self._categories[category].observation=temp_obs
         """
         if the process is not explicitly written in the file, 
         initialize process with the generic keys and default file

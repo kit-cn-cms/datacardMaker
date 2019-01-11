@@ -10,7 +10,7 @@ from processObject import processObject
 from identificationLogic import identificationLogic
 
 class categoryObject(object):
-    _debug     = 200
+    _debug     = 0
     def init_variables(self):
         self._name     = "categoryName"
         self._data_obs = None
@@ -94,14 +94,16 @@ class categoryObject(object):
     @observation.setter
     def observation(self, data_obs):
         if isinstance(data_obs, processObject):
-            s = "adding %s as observation " % data_obs.name
-            s+= "in category %s" % self._name
-            print s
+            if self._debug>=30:
+                s = "adding %s as observation " % data_obs.name
+                s+= "in category %s" % self._name
+                print s
             self._data_obs = data_obs
         elif isinstance(data_obs, str):
-            s = "Will generate observation with name '%s'" % data_obs
-            s+= " in category %s" % self._name
-            print s
+            if self._debug>=30:
+                s = "Will generate observation with name '%s'" % data_obs
+                s+= " in category %s" % self._name
+                print s
             self._create_process(processName = data_obs)
         else:
             print "ERROR: Cannot add object of type %s as observation!" % type(data_obs)
@@ -349,10 +351,12 @@ class categoryObject(object):
                     """
                     if "lumi" in uncertainty and (value == "x" or value == "X"):
                         value = lumi
-                        print "changing value to", value
+                        if self._debug>=30:
+                            print "changing value to", value
                     elif "bgnorm" in uncertainty and (value == "x" or value == "X"):
                         value = bgnorm
-                        print "changing value to", value
+                        if self._debug>=30:
+                            print "changing value to", value
 
                     if not value is "-":
                         if uncertainty in self[clear_procname]._uncertainties:

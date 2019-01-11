@@ -8,10 +8,12 @@ if not basedir in spath:
 class valueConventions(object):
     """docstring for valueConventions"""
     def __init__(self):
-        
-        print "Initializing valueConventions"
+        self._debug = 0
         self._allowed_types = ["lnN", "shape"]
-        self._debug = 99
+        if self._debug>=30:
+            print "Initializing valueConventions"
+        
+        
 
 
     @property
