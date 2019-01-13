@@ -6,7 +6,7 @@ class fileHandler(object):
     The fileHandler class manages all access to files required for the analysis
     TODO: Improve memory handling by cleverly closing files
     """
-    _debug = 200
+    _debug = 0
 
     def init_variables(self):
         self._filepath = "/path/to/file"
@@ -87,13 +87,13 @@ class fileHandler(object):
             print "DEBUG: entering 'fileHandler.load_histogram'"
         if self._file:
             if self._debug >= 10:
-                print "DEBUG: loading histogram '%s' from '%s'" % (histname, file)
+                print "DEBUG: loading histogram '%s' from '%s'" % (histname, self._file.GetName())
             h = self._file.Get(histname)
             if isinstance(h, TH1):
                 return h
             else:
                 print ("WARNING: histogram '%s' does not exist in '%s'"
-                        % (histname, file))
+                        % (histname, self._file.GetName()))
         else:
             print "ERROR: In fileHandler - file is not set!"
         return None

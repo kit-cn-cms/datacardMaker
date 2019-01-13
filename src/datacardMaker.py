@@ -12,11 +12,13 @@ from processObject import processObject
 from systematicObject import systematicObject
 
 class datacardMaker(object):
-    _debug = 200
+    _debug = 0
     def init_variables(self):
         self._block_separator   = "\n" + "-"*130 + "\n"
         self._hardcode_numbers = True
         self._replace_files = False
+        self._autoMCStats=False
+        self._template_autoMCStats = "%(CATEGORY)s autoMCStats %(THRESHOLD)s %(SIGNAL)s %(HISTMODE)s"
 
     def __init__(   self, analysis = None,
                     outputpath = "", replacefiles=False,
@@ -133,6 +135,13 @@ class datacardMaker(object):
         content.append(self.create_process_block(analysis=analysis))
         content.append(self.create_systematics_block(analysis=analysis))
         
+        """
+        creates block for autoMCstats
+        """
+        autoMCstats_block=self.create_autoMCStats_block(analysis=analysis)
+        if self._autoMCStats:
+            content.append(autoMCstats_block)
+
         return self._block_separator.join(content)
             
 
@@ -208,7 +217,7 @@ class datacardMaker(object):
                               used before, this should contain '$CHANNEL' 
                               and/or '$PROCESS'
         """
-        size=self.get_max_size([analysis.categories,self.get_bkg_processes(analysis=analysis),self.get_signal_processes(analysis=analysis)])
+        size=self.get_max_size([analysis.categories,analysis.signalprocesses_names,analysis.backgroundprocesses_names])
         size+=5
         sizekeys=self.get_max_size_keys(analysis)
         sizekeys+=5
@@ -236,6 +245,14 @@ class datacardMaker(object):
             if not file=="" and not key_nominal_hist=="" and not key_systematic_hist=="":
                 line.append(self.write_keyword_block_line(process_name=process,category_name=category.name,file=file,
                     nominal_key=key_nominal_hist,syst_key=key_systematic_hist,size=size,sizekeys=sizekeys))
+        data_obs = category.observation
+        if not data_obs is None and not data_obs.file == category.default_file:
+            file = data_obs.file
+            key_nominal_hist=data_obs.key_nominal_hist
+            key_systematic_hist=data_obs.key_systematic_hist
+            if not file=="" and not key_nominal_hist=="" and not key_systematic_hist=="":
+                line.append(self.write_keyword_block_line(process_name=data_obs.name,category_name=category.name,file=file,
+                    nominal_key=key_nominal_hist,syst_key=key_systematic_hist,size=size,sizekeys=sizekeys))
         return line
 
     def write_keyword_block_line(self, process_name, category_name, file, 
@@ -248,8 +265,6 @@ class datacardMaker(object):
         s+= "%s" %(file).ljust(sizekeys)
         s+= "%s" %(nominal_key).ljust(sizekeys)
         s+= "%s" %(syst_key).ljust(sizekeys)
-
-        print s
         return s
 
     def write_keyword_generic_lines(self, category, size, sizekeys):
@@ -279,8 +294,12 @@ class datacardMaker(object):
                 keynames.append(process.file)
                 keynames.append(process.key_nominal_hist)
                 keynames.append(process.key_systematic_hist)
+            process=analysis[category_name].observation
+            if not process is None:
+                keynames.append(process.file)
+                keynames.append(process.key_nominal_hist)
+                keynames.append(process.key_systematic_hist)
         keynames = [x for x in keynames if x != "" and not x is None]
-        print keynames
         return len(max(keynames,key=len))
 
 
@@ -351,8 +370,6 @@ class datacardMaker(object):
         get sorted list of signal processes and backgroundprocesses for 
         all categories for better readability
         """
-        signalprocs=self.get_signal_processes(analysis=analysis)
-        bkgprocs=self.get_bkg_processes(analysis=analysis)
 
         
         lines = []
@@ -364,29 +381,32 @@ class datacardMaker(object):
         process_index = ["process",""]
         rate = ["rate","" ]
 
-        for category in analysis.categories:
+        for category_name in analysis.categories:
+            category=analysis.categories[category_name]
             """
             Signal processes first
             """
+            signalprocs=sorted(category.signal_processes)
             for number,signal_process in enumerate(signalprocs):
 
-                bins.append("%s" % category)
+                bins.append("%s" % category_name)
                 process.append("%s" % signal_process)
 
-                index=1+number-len(analysis[category].signal_processes)
+                index=1+number-len(analysis[category_name].signal_processes)
                 process_index.append("%s" % str(index))
 
-                rate.append("%s" % str(analysis[category][signal_process].eventcount))
+                rate.append("%s" % str(analysis[category_name][signal_process].eventcount))
             """
             Same with background processes 
             """
+            bkgprocs=sorted(category.background_processes)
             for number,bkg_process in enumerate(bkgprocs):
-                bins.append("%s" % category)
+                bins.append("%s" % category_name)
                 process.append("%s" % bkg_process)
 
                 index=1+number
                 process_index.append("%s" % str(index))
-                rate.append("%s" % str(analysis[category][bkg_process].eventcount))
+                rate.append("%s" % str(analysis[category_name][bkg_process].eventcount))
         size=self.get_max_size([bins,process,analysis.systematics])
         size+=5
 
@@ -399,20 +419,6 @@ class datacardMaker(object):
         lines.append("".join(scaled_process_index))
         lines.append("".join(scaled_rate))
         return "\n".join(lines)
-
-
-    
-    def get_signal_processes(self,analysis):
-    	#Overwriting for more than 1 category, only working when same processes for all categories
-        for category in analysis.categories:
-        	sigprc=sorted(analysis[category].signal_processes)
-      	return sigprc
-
-    def get_bkg_processes(self,analysis):
-    	#Overwriting for more than 1 category, only working when same processes for all categories
-        for category in analysis.categories:
-        	bkgprc=sorted(analysis[category].background_processes)
-      	return bkgprc
 
 
 
@@ -439,30 +445,59 @@ class datacardMaker(object):
         IMPORTANT:  The order of process has to be the same as in the 
                     process block
         """
-        signalprocs=self.get_signal_processes(analysis)
-        bkgprocs=self.get_bkg_processes(analysis)
 
-        size=self.get_max_size([signalprocs,bkgprocs,analysis.systematics,analysis.categories])
+        size=self.get_max_size([analysis.signalprocesses_names,
+                                analysis.backgroundprocesses_names,
+                                analysis.systematics,analysis.categories])
         size+=5
 
         lines = []
 
-
-        for systematic in sorted(analysis.systematics):
+        nsystematics = len(analysis.systematics)
+        for i, systematic in enumerate(sorted(analysis.systematics)):
             temp="%s" % systematic.ljust(size)
+            if self._debug >= 99:
+                print "#Systematic: {0}/{1}".format(i+1, nsystematics)
             temp+="%s" % str(analysis.systematics[systematic].type).ljust(size)
-            for category in analysis.categories:
+            for category_name in analysis.categories:
+                category=analysis.categories[category_name]
                 """
                 Signal processes first, then background processes
                 """
-                for number,signal_process in enumerate(signalprocs):
+                if self._debug >= 99:
+                    print "Category:", category_name
+                for signal_process in sorted(category.signal_processes):
+                    if self._debug>=90:
+                        print signal_process
                     temp += "%s" % str(analysis.systematics[systematic].get_correlation_raw(process_name=signal_process,
-                                                                              category_name=category)).ljust(size)   
-                for number,bkg_process in enumerate(bkgprocs):
+                                                                              category_name=category_name)).ljust(size)   
+                for bkg_process in sorted(category.background_processes):
+                    if self._debug>=90:
+                        print bkg_process
                     temp += "%s" % str(analysis.systematics[systematic].get_correlation_raw(process_name=bkg_process,
-                                                                             category_name=category)).ljust(size)
+                                                                             category_name=category_name)).ljust(size)
             lines.append(temp)
        	return "\n".join(lines)
+
+
+    def create_autoMCStats_block(self,analysis):
+        lines = []
+
+        for category in analysis:
+            if analysis[category].autoMCStats:
+                temp= self._template_autoMCStats % ({
+                    "CATEGORY"  : category,
+                    "THRESHOLD" : str(analysis[category].autoMCStats_threshold),
+                    "SIGNAL"    : str(analysis[category].autoMCStats_include_signal),
+                    "HISTMODE"  : str(analysis[category].autoMCStats_hist_mode)
+                    })
+                lines.append(temp)
+        if lines:
+            self._autoMCStats = True
+            return "\n".join(lines)
+        return False
+
+
 
     
 
