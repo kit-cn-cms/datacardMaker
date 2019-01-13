@@ -12,7 +12,7 @@ class processObject(object):
     _id_logic = identificationLogic()
     identificationLogic.belongs_to = "process"
     _value_rules = valueConventions()
-    _file_handler = fileHandler()
+    
     
     def init_variables(self):
         self._name = ""
@@ -24,6 +24,7 @@ class processObject(object):
         self._uncertainties = {}
         self._debug = 0
         self._calculate_yield = False
+        self._file_handler = fileHandler()
 
 
     def __init__(   self, processName = None, pathToRootfile = None, 
@@ -126,6 +127,7 @@ class processObject(object):
             print "setting filepath to", rootpath
         if path.exists(rootpath):
             self._file_handler.filepath = rootpath
+            self.eventcount = self.calculate_yield()
         else:
             print "file '%s' does not exist!" % rootpath
 

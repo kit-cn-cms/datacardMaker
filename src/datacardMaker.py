@@ -245,6 +245,14 @@ class datacardMaker(object):
             if not file=="" and not key_nominal_hist=="" and not key_systematic_hist=="":
                 line.append(self.write_keyword_block_line(process_name=process,category_name=category.name,file=file,
                     nominal_key=key_nominal_hist,syst_key=key_systematic_hist,size=size,sizekeys=sizekeys))
+        data_obs = category.observation
+        if not data_obs is None and not data_obs.file == category.default_file:
+            file = data_obs.file
+            key_nominal_hist=data_obs.key_nominal_hist
+            key_systematic_hist=data_obs.key_systematic_hist
+            if not file=="" and not key_nominal_hist=="" and not key_systematic_hist=="":
+                line.append(self.write_keyword_block_line(process_name=data_obs.name,category_name=category.name,file=file,
+                    nominal_key=key_nominal_hist,syst_key=key_systematic_hist,size=size,sizekeys=sizekeys))
         return line
 
     def write_keyword_block_line(self, process_name, category_name, file, 
@@ -283,6 +291,11 @@ class datacardMaker(object):
             keynames.append(category.generic_key_systematic_hist)
             for process_name in category:
                 process=analysis[category_name][process_name]
+                keynames.append(process.file)
+                keynames.append(process.key_nominal_hist)
+                keynames.append(process.key_systematic_hist)
+            process=analysis[category_name].observation
+            if not process is None:
                 keynames.append(process.file)
                 keynames.append(process.key_nominal_hist)
                 keynames.append(process.key_systematic_hist)
