@@ -6,7 +6,7 @@ class fileHandler(object):
     The fileHandler class manages all access to files required for the analysis
     TODO: Improve memory handling by cleverly closing files
     """
-    _debug = 200
+    _debug = 0
 
     def init_variables(self):
         self._filepath = "/path/to/file"
