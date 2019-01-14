@@ -38,16 +38,20 @@ class processObject(object):
         if not pathToRootfile is None:
             self.file = pathToRootfile
         if not nominal_hist_key is None:
+            self.key_nominal_hist   =nominal_hist_key
             if self._debug>=30:
                 print "-"*130
-                print "DEBUG PROCESSOBJECT INIT: setting key_nominal_hist to", nominal_hist_key
+                print "DEBUG PROCESSOBJECT INIT: setting key_nominal_hist to", self.key_nominal_hist
                 print "-"*130
-            self.key_nominal_hist   = nominal_hist_key
+        if not systematic_hist_key is None:
+            self.key_systematic_hist = systematic_hist_key
+            if self._debug>=30:
+                print "-"*130
+                print "DEBUG PROCESSOBJECT INIT: setting key_systematic_hist to", self.key_systematic_hist
+                print "-"*130
         
         #if self._calculate_yield:
         #    self._eventcount        = self.calculate_yield()
-        if not systematic_hist_key is None:
-            self.key_systematic_hist = systematic_hist_key
         if self._debug >= 3:
             s = "initialized process with name '%s'" % self._name
             s += " in category '%s'" % self._categoryname
@@ -127,7 +131,8 @@ class processObject(object):
             print "setting filepath to", rootpath
         if path.exists(rootpath):
             self._file_handler.filepath = rootpath
-            self.eventcount = self.calculate_yield()
+            if not self.key_nominal_hist == "":
+                self.eventcount = self.calculate_yield()
         else:
             print "file '%s' does not exist!" % rootpath
 
@@ -138,9 +143,10 @@ class processObject(object):
     @key_nominal_hist.setter
     def key_nominal_hist(self, hname):
         if self._id_logic.is_nongeneric_key(hname):
-            if self._file_handler.histogram_exists(histname = hname):
-                self._nominalhistname = hname
-                self._eventcount = self._file_handler.get_integral(hname)
+            if os.path.exists(self.file):
+                if self._file_handler.histogram_exists(histname = hname):
+                    self._nominalhistname = hname
+                    self._eventcount = self._file_handler.get_integral(hname)
         else:
             if self._debug>=30:
                 print "-"*130
