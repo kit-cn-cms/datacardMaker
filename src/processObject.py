@@ -143,7 +143,7 @@ class processObject(object):
     @key_nominal_hist.setter
     def key_nominal_hist(self, hname):
         if self._id_logic.is_nongeneric_key(hname):
-            if os.path.exists(self.file):
+            if path.exists(self.file):
                 if self._file_handler.histogram_exists(histname = hname):
                     self._nominalhistname = hname
                     self._eventcount = self._file_handler.get_integral(hname)
