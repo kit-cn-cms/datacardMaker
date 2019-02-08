@@ -213,7 +213,7 @@ class processObject(object):
                     print "Value '{0}' is not a good value!".format(value)
             else:
                 temp = "There is already an entry for uncertainty " 
-                temp += "'%s' in process '%s'! " % (syst, self.get_name())
+                temp += "'%s' in process '%s'! " % (syst, self.name)
                 temp += "Please use 'set_uncertainty' instead."
                 print temp
         else:
@@ -237,7 +237,7 @@ class processObject(object):
                 self._uncertainties[systematicName]["type"] = typ
         else:
             s = "There is no entry for uncertainty %s" % systematicName
-            s += " in process %s! Please add it first" % self.get_name()
+            s += " in process %s! Please add it first" % self.name
             print s
 
     def delete_uncertainty(self,systematicName):
