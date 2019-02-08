@@ -333,8 +333,12 @@ class categoryObject(object):
                 if not process in self:
                     if signaltag in clear_procname:
                         self.create_signal_process(processName=clear_procname)
+                        if self._debug>1:
+                            print self._signalprocs[clear_procname]
                     else:
-                        self.create_background_process(processName=clear_procname)  
+                        self.create_background_process(processName=clear_procname)
+                        if self._debug>1:
+                            print self._bkgprocs[clear_procname] 
                 else:
                     print "found process", clear_procname
                 """
@@ -344,6 +348,9 @@ class categoryObject(object):
                     value = value.strip()
                     typ = typ.strip()
                     uncertainty = uncertainty.strip()
+                    #if uncertainty.startswith("#"):
+                    #    continue
+                    #else:
                     if self._debug >= 99:
                         print "DEBUG: adding combination ({0},\t{1},\t{2}) for {3}".format(uncertainty,typ,value, clear_procname)
                     """
@@ -365,7 +372,7 @@ class categoryObject(object):
                             self[clear_procname].set_uncertainty(systematicName=uncertainty,typ=typ,value=value)
                         else:
                             self[clear_procname].add_uncertainty(syst=uncertainty,typ=typ,value=value)
-                 
+                    
     """
     overloaded get, in and for operator to get better access to processes in 
     category object:
