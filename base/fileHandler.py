@@ -1,6 +1,6 @@
-from ROOT import TFile, TH1
+from ROOT import TFile, TH1, PyConfig
+PyConfig.IgnoreCommandLineOptions = True
 from os import path as opath
-
 class fileHandler(object):
     """
     The fileHandler class manages all access to files required for the analysis
