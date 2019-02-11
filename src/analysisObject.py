@@ -316,6 +316,11 @@ class analysisObject(object):
             self._load_from_datacard_add_processes(list_of_categories=categoryprocesses,
                 list_of_processes=processes, list_of_processtypes=processtypes,
                 list_of_shapelines=shape_lines,observation_Flag=observation_Flag)
+
+            for category in self._categories:
+                if not self._categories[category].observation:
+                    self._categories[category].observation = observation_Flag
+
             """
             adds systematics to processes
             """
@@ -403,6 +408,8 @@ class analysisObject(object):
                         print "DEBUG: adding observation:"
                         print temp_obs
                     self._categories[category].observation=temp_obs
+
+
         """
         if the process is not explicitly written in the file, 
         initialize process with the generic keys and default file
