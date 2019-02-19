@@ -364,13 +364,17 @@ class categoryObject(object):
                         value = bgnorm
                         if self._debug>=30:
                             print "changing value to", value
-
                     if not value is "-":
+                        # print "-"*130
+                        # print "HELLO"
+                        # print "-"*130
                         if uncertainty in self[clear_procname]._uncertainties:
                             if self._debug >=30:
                                 print "DEBUG: setting {0} to \t{1} and \t{2} for process {3}".format(uncertainty,typ,value, clear_procname)
                             self[clear_procname].set_uncertainty(systematicName=uncertainty,typ=typ,value=value)
                         else:
+                            if self._debug >=30:
+                                print "DEBUG: adding {0} with '{1}' and '{2}' for process '{3}'".format(uncertainty,typ,value, clear_procname)
                             self[clear_procname].add_uncertainty(syst=uncertainty,typ=typ,value=value)
                     
     """
