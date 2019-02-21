@@ -188,12 +188,17 @@ class processObject(object):
             (see valueConventions.is_good_systval)
         and only adds the systematics if it's new and has a good value
         """
-        
+        if self._debug >=99:
+            print "DEGUB: Entering function 'processObject.add_uncertainty'"
         if isinstance(syst, str) and isinstance(typ, str):
             if not syst in self._uncertainties:
                 if not self._value_rules.is_allowed_type(typ=typ):
                     return False
-                if typ is "shape":
+                if self._debug >= 99:
+                    print "DEBUG: type of uncertainty '%s' is '%s'" % (syst, typ)
+                if typ == "shape":
+                    if self._debug >= 99:
+                        print "DEBUG: uncertainty type is shape!"
                     tmp = syst
                     if syst.startswith("#"):
                         tmp = tmp.replace("#","")
@@ -202,7 +207,13 @@ class processObject(object):
                         print "Looking for varied histograms for systematic", syst
                     keys = self._id_logic.build_systematic_histo_names(
                             systematic_name = tmp, base_key = self._systkey)
-                    if not all(self._file_handler.histogram_exists(k) for k in keys):
+                    if self._debug >= 99:
+                        print keys
+                    if not all(self._file_handler.get_integral(k) > 0 for k in keys):
+                        temp = "WARNING: Problems with histograms for " 
+                        temp += "'%s' in process '%s'! " % (syst, self.name)
+                        temp += "Will not add uncertainty '%s'" % syst
+                        print temp
                         return False
                 if self._value_rules.is_good_systval(value):
                     self._uncertainties[syst] = {}
@@ -232,13 +243,26 @@ class processObject(object):
         and only adds the systematics if there is an entry and the value is good
         """
         if systematicName in self._uncertainties:
+            if typ == "shape":
+                keys = self._id_logic.build_systematic_histo_names(
+                        systematic_name = tmp, base_key = self._systkey)
+                if self._debug >= 99:
+                        print keys
+                if not all(self._file_handler.get_integral(k) > 0 for k in keys):
+                    temp = "WARNING: Problems with histograms for " 
+                    temp += "'%s' in process '%s'! " % (syst, self.name)
+                    temp += "Will not add uncertainty '%s'" % syst
+                    print temp
+                    return False
             if self._value_rules.is_good_systval(value):
                 self._uncertainties[systematicName]["value"] = str(value)
                 self._uncertainties[systematicName]["type"] = typ
+                return True
         else:
             s = "There is no entry for uncertainty %s" % systematicName
             s += " in process %s! Please add it first" % self.name
             print s
+        return False
 
     def delete_uncertainty(self,systematicName):
         if systematicName in self._uncertainties:
