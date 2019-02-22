@@ -154,7 +154,7 @@ class categoryObject(object):
     @default_file.setter
     def default_file(self, filepath):
         if path.exists(filepath):
-            self._default_file = filepath
+            self._default_file = path.realpath(filepath)
         else:
             print "ERROR: File '%s' does not exist!" % filepath
 
