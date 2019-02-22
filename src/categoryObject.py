@@ -154,7 +154,7 @@ class categoryObject(object):
     @default_file.setter
     def default_file(self, filepath):
         if path.exists(filepath):
-            self._default_file = filepath
+            self._default_file = path.realpath(filepath)
         else:
             print "ERROR: File '%s' does not exist!" % filepath
 
@@ -342,40 +342,47 @@ class categoryObject(object):
                 else:
                     print "found process", clear_procname
                 """
-                add uncertainties to process
+                check if process exists, else delete it
                 """
-                for uncertainty,typ,value in zip(csv_reader[uncertainty_label],csv_reader[typ_label],csv_reader[process]):
-                    value = value.strip()
-                    typ = typ.strip()
-                    uncertainty = uncertainty.strip()
-                    #if uncertainty.startswith("#"):
-                    #    continue
-                    #else:
-                    if self._debug >= 99:
-                        print "DEBUG: adding combination ({0},\t{1},\t{2}) for {3}".format(uncertainty,typ,value, clear_procname)
+                if not self[clear_procname].key_nominal_hist:
+                    print "deleted process %s" % process
+                    self.delete_process(processName=process)
+                else:
                     """
-                    lumi and bgnorm uncertainties can be used as an argument, not set in CSV files
+                    add uncertainties to process
                     """
-                    if "lumi" in uncertainty and (value == "x" or value == "X"):
-                        value = lumi
-                        if self._debug>=30:
-                            print "changing value to", value
-                    elif "bgnorm" in uncertainty and (value == "x" or value == "X"):
-                        value = bgnorm
-                        if self._debug>=30:
-                            print "changing value to", value
-                    if not value is "-":
-                        # print "-"*130
-                        # print "HELLO"
-                        # print "-"*130
-                        if uncertainty in self[clear_procname]._uncertainties:
-                            if self._debug >=30:
-                                print "DEBUG: setting {0} to \t{1} and \t{2} for process {3}".format(uncertainty,typ,value, clear_procname)
-                            self[clear_procname].set_uncertainty(systematicName=uncertainty,typ=typ,value=value)
-                        else:
-                            if self._debug >=30:
-                                print "DEBUG: adding {0} with '{1}' and '{2}' for process '{3}'".format(uncertainty,typ,value, clear_procname)
-                            self[clear_procname].add_uncertainty(syst=uncertainty,typ=typ,value=value)
+                    for uncertainty,typ,value in zip(csv_reader[uncertainty_label],csv_reader[typ_label],csv_reader[process]):
+                        value = value.strip()
+                        typ = typ.strip()
+                        uncertainty = uncertainty.strip()
+                        #if uncertainty.startswith("#"):
+                        #    continue
+                        #else:
+                        if self._debug >= 99:
+                            print "DEBUG: adding combination ({0},\t{1},\t{2}) for {3}".format(uncertainty,typ,value, clear_procname)
+                        """
+                        lumi and bgnorm uncertainties can be used as an argument, not set in CSV files
+                        """
+                        if "lumi" in uncertainty and (value == "x" or value == "X"):
+                            value = lumi
+                            if self._debug>=30:
+                                print "changing value to", value
+                        elif "bgnorm" in uncertainty and (value == "x" or value == "X"):
+                            value = bgnorm
+                            if self._debug>=30:
+                                print "changing value to", value
+                        if not value is "-":
+                            # print "-"*130
+                            # print "HELLO"
+                            # print "-"*130
+                            if uncertainty in self[clear_procname]._uncertainties:
+                                if self._debug >=30:
+                                    print "DEBUG: setting {0} to \t{1} and \t{2} for process {3}".format(uncertainty,typ,value, clear_procname)
+                                self[clear_procname].set_uncertainty(systematicName=uncertainty,typ=typ,value=value)
+                            else:
+                                if self._debug >=30:
+                                    print "DEBUG: adding {0} with '{1}' and '{2}' for process '{3}'".format(uncertainty,typ,value, clear_procname)
+                                self[clear_procname].add_uncertainty(syst=uncertainty,typ=typ,value=value)
                     
     """
     overloaded get, in and for operator to get better access to processes in 
