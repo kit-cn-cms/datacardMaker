@@ -52,10 +52,13 @@ Dictionaries are used.
 To access a category use analysis[Category_Name]
 To access a process use  analysis[Category_Name][Process_Name]
 
+Can load from CSV File or already existing Datacard
 """
 
 analysis=analysisObject()
-
+"""
+Load from CSV File
+"""
 if sys.argv[1]=="CSV":
 
 	"""
@@ -155,8 +158,10 @@ if sys.argv[1]=="CSV":
 	AnalysisObject:
 	'''
 	print analysis
-	
 
+"""
+Load from Datacard
+"""
 if sys.argv[1]=="Datacard":
 
 	"""
@@ -178,3 +183,58 @@ if sys.argv[1]=="Datacard":
 	AnalysisObject:
 	'''
 	print analysis
+
+
+"""
+------------------------------------------------
+Possibilities to change the analysis Object
+------------------------------------------------
+
+- delete categories
+- delete systematics
+- delete processes
+
+"""
+analysis.delete_category("ljets_j5_tge4_DeepCSV")
+#or delete_categories for a list of categories
+analysis.delete_process_for_all_categories("ttbarPlus2B") 
+#or delete_processes_for_all_categories for a list of processes
+analysis.delete_uncertainties_for_all_processes(["QCDscale_ttH","bgnorm_ttbarPlus2B"])		
+#or delete_untertainty_for_all_processes for a single uncertainty
+
+"""
+- add/create signal process
+- add/create background process
+"""
+analysis.create_background_process(processName="ttbarPlus2B")
+
+"""
+- add uncertainty 
+"""
+for category in analysis:
+	analysis[category]["ttbarPlus2B"].add_uncertainty(syst="bgnorm_ttbarPlus2B",
+														typ="lnN", value=1.5)
+	analysis[category]["ttbarPlus2B"].add_uncertainty(syst="lumi_13TeV_2016",
+														typ="lnN", value=1.5)
+	#change uncertainty typ and value
+	for process in analysis[category]:
+		analysis[category][process].set_uncertainty(systematicName="lumi_13TeV_2016",
+														typ="lnN", value=1.05)
+
+"""
+------------------------------------------------
+Write AnalysisObject to Datacard
+------------------------------------------------
+"""
+datacardComplete=datacardMaker()
+#write the observation yield and yield for each process
+datacardComplete.hardcode_numbers=True
+#use relative paths of datacard to file in the datacard
+datacardComplete.relative_paths=True
+#replace output file
+datacardComplete.replace_files=True
+#outputpath for datacard
+datacardComplete.outputpath="testresult.txt"
+
+#write datacard
+datacardComplete.write_datacard(analysis)
