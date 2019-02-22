@@ -22,12 +22,14 @@ class datacardMaker(object):
 
     def __init__(   self, analysis = None,
                     outputpath = "", replacefiles=False,
-                    hardcodenumbers=False):
+                    hardcodenumbers=False, relativePaths=False):
         self.init_variables()
         if replacefiles:
             self.replace_files = replacefiles
         if hardcodenumbers:
             self.hardcode_numbers = hardcodenumbers
+        if relativePaths:
+            self.relative_paths = relativePaths
         if outputpath:
             self.outputpath = outputpath
             if analysis:
@@ -43,6 +45,16 @@ class datacardMaker(object):
             self._hardcode_numbers = val
         else:
             print "Value given is not boolean! Did not set 'hardcode_numbers'"
+
+    @property
+    def relative_paths(self):
+        return self._relative_paths
+    @hardcode_numbers.setter
+    def relative_paths(self, val):
+        if type(val) == bool:
+            self._relative_paths = val
+        else:
+            print "Value given is not boolean! Did not set 'relative_paths'"
 
     @property
     def replace_files(self):
