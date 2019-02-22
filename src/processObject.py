@@ -130,7 +130,7 @@ class processObject(object):
         if self._debug >= 20:
             print "setting filepath to", rootpath
         if path.exists(rootpath):
-            self._file_handler.filepath = rootpath
+            self._file_handler.filepath = path.realpath(rootpath)
             if not self.key_nominal_hist == "":
                 self.eventcount = self.calculate_yield()
         else:
