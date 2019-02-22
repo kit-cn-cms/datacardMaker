@@ -121,7 +121,7 @@ class analysisObject(object):
         else:
             print "ERROR: No category %s in analysisObject" % categoryName
 
-    def create_signal_process(self,categoryName,processName,
+    def create_signal_process(self,processName,categoryName=None,
                         file=None,key_nominal_hist=None,
                         key_systematic_hist=None):
         """
@@ -134,8 +134,12 @@ class analysisObject(object):
         if self._debug>=90:
             print key_nominal_hist
             print key_systematic_hist
-        
-        self._categories[categoryName].create_signal_process(processName=processName,
+        if not categoryName==None:
+            self._categories[categoryName].create_signal_process(processName=processName,
+                           rootfile=file,histoname=key_nominal_hist,systkey=key_systematic_hist)
+        else:
+            for category in self._categories:
+                self._categories[category].create_signal_process(processName=processName,
                            rootfile=file,histoname=key_nominal_hist,systkey=key_systematic_hist)
 
         if self._debug >= 50:
@@ -156,7 +160,7 @@ class analysisObject(object):
             print "ERROR: No category %s in analysisObject" % categoryName
 
 
-    def create_background_process(self,categoryName,processName,
+    def create_background_process(self,processName,categoryName=None,
                         file=None,key_nominal_hist=None,
                         key_systematic_hist=None):
         """
@@ -169,8 +173,12 @@ class analysisObject(object):
         if self._debug>100:
             print key_nominal_hist
             print key_systematic_hist
-        
-        self._categories[categoryName].create_background_process(processName=processName,
+        if not categoryName==None:
+            self._categories[categoryName].create_background_process(processName=processName,
+                           rootfile=file,histoname=key_nominal_hist,systkey=key_systematic_hist)
+        else:
+            for category in self._categories:
+                self._categories[category].create_background_process(processName=processName,
                            rootfile=file,histoname=key_nominal_hist,systkey=key_systematic_hist)
         
         if self._debug >= 50:
