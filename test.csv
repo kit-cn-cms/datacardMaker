@@ -1,0 +1,10 @@
+Uncertainty,Type,ttH_hbb,ttH_hcc,ttbarOther,ttbarPlus2B,ttbarPlusB,ttbarPlusBBbar,ttbarPlusCCbar
+#QCDscale_ttbar,lnN,-,-,0.96/1.02,0.96/1.02,0.96/1.02,0.96/1.02,0.96/1.02
+#bgnorm_ttbarPlusCCbar,lnN,-,-,-,-,-,-,1.5
+#pdf_gg_ttH,lnN,1.036,1.036,-,-,-,-,-
+bgnorm_ttbarPlusBBbar,lnN,-,-,-,-,-,1.5,-
+lumi_13TeV_2016,lnN,1.025,1.025,1.025,1.025,1.025,1.025,1.025
+bgnorm_ttbarPlus2B,lnN,-,-,-,1.5,-,-,-
+bgnorm_ttbarPlusB,lnN,-,-,-,-,1.5,-,-
+pdf_gg,lnN,-,-,1.04,1.04,1.04,1.04,1.04
+#QCDscale_ttH,lnN,0.908/1.058,0.908/1.058,-,-,-,-,-
