@@ -15,19 +15,22 @@ class datacardMaker(object):
     _debug = 0
     def init_variables(self):
         self._block_separator   = "\n" + "-"*130 + "\n"
-        self._hardcode_numbers = True
+        self._hardcode_numbers = False
         self._replace_files = False
+        self._relative_paths = False
         self._autoMCStats=False
         self._template_autoMCStats = "%(CATEGORY)s autoMCStats %(THRESHOLD)s %(SIGNAL)s %(HISTMODE)s"
 
     def __init__(   self, analysis = None,
                     outputpath = "", replacefiles=False,
-                    hardcodenumbers=False):
+                    hardcodenumbers=True, relativePaths=False):
         self.init_variables()
         if replacefiles:
             self.replace_files = replacefiles
         if hardcodenumbers:
             self.hardcode_numbers = hardcodenumbers
+        if relativePaths:
+            self.relative_paths = relativePaths
         if outputpath:
             self.outputpath = outputpath
             if analysis:
@@ -43,6 +46,16 @@ class datacardMaker(object):
             self._hardcode_numbers = val
         else:
             print "Value given is not boolean! Did not set 'hardcode_numbers'"
+
+    @property
+    def relative_paths(self):
+        return self._relative_paths
+    @relative_paths.setter
+    def relative_paths(self, val):
+        if type(val) == bool:
+            self._relative_paths = val
+        else:
+            print "Value given is not boolean! Did not set 'relative_paths'"
 
     @property
     def replace_files(self):
@@ -240,14 +253,21 @@ class datacardMaker(object):
         #adds the process keys (need to add: only add process key if it doesnt match the generic key)
         for process in category:
             file=category[process].file
-            key_nominal_hist=category[process].key_nominal_hist
-            key_systematic_hist=category[process].key_systematic_hist
-            if not file=="" and not key_nominal_hist=="" and not key_systematic_hist=="":
-                line.append(self.write_keyword_block_line(process_name=process,category_name=category.name,file=file,
-                    nominal_key=key_nominal_hist,syst_key=key_systematic_hist,size=size,sizekeys=sizekeys))
+            if not file == category.default_file:
+                if self.relative_paths:
+                    dirname = path.dirname(self.outputpath)
+                    file = path.relpath(file,dirname)
+                key_nominal_hist=category[process].key_nominal_hist
+                key_systematic_hist=category[process].key_systematic_hist
+                if not file=="" and not key_nominal_hist=="" and not key_systematic_hist=="":
+                    line.append(self.write_keyword_block_line(process_name=process,category_name=category.name,file=file,
+                        nominal_key=key_nominal_hist,syst_key=key_systematic_hist,size=size,sizekeys=sizekeys))
         data_obs = category.observation
         if not data_obs is None and not data_obs.file == category.default_file:
             file = data_obs.file
+            if self.relative_paths:
+                    dirname = path.dirname(self.outputpath)
+                    file = path.relpath(file,dirname)
             key_nominal_hist=data_obs.key_nominal_hist
             key_systematic_hist=data_obs.key_systematic_hist
             if not file=="" and not key_nominal_hist=="" and not key_systematic_hist=="":
@@ -271,9 +291,13 @@ class datacardMaker(object):
         """
         Adds the generic key 
         """
-        
+        file = category.default_file
+        if self.relative_paths:
+            dirname = path.dirname(self.outputpath)
+            file = path.relpath(file,dirname)
+
         line = self.write_keyword_block_line(process_name = "*", 
-           category_name = category.name, file = category.default_file, 
+           category_name = category.name, file = file, 
            nominal_key = category.generic_key_nominal_hist, 
            syst_key = category.generic_key_systematic_hist, size=size, 
            sizekeys=sizekeys)
