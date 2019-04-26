@@ -316,7 +316,7 @@ class categoryObject(object):
 
         """
         with open(pathToFile, mode="r") as csv_file:
-            csv_reader = pandas.read_csv(pathToFile, skipinitialspace=True,)
+            csv_reader = pandas.read_csv(pathToFile, skipinitialspace=True,dtype= str)
             processes=list(csv_reader)
             """
             get rid of uncertainty and type entry to get processes
