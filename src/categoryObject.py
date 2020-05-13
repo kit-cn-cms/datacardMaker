@@ -10,7 +10,7 @@ from processObject import processObject
 from identificationLogic import identificationLogic
 
 class categoryObject(object):
-    _debug     = 0
+    _debug     = 5
     def init_variables(self):
         self._name     = "categoryName"
         self._data_obs = None
@@ -54,6 +54,8 @@ class categoryObject(object):
         if not systkey is None:
             self.generic_key_systematic_hist = systkey
         if not defaultRootFile is None:
+            if self._debug >=5:
+                print "setting root file to '{}'".format(defaultRootFile)
             if path.exists(defaultRootFile):
                 self.default_file = defaultRootFile
 
@@ -295,20 +297,25 @@ class categoryObject(object):
             print "ERROR: no process %s found in category %s" % (processName,self.name)
 
 
-    def is_compatible_with_default(self, process):
+    def is_compatible_with_default(self, process, check_nominal = True, check_systs = True):
         """
         check whether information for 'process' is compatible with default
         information for this category
         """
-        nominal_is_compatible = self._key_creator.matches_generic_nominal_key(  
-            tocheck = process.key_nominal_hist, 
-            process_name = process.name,
-            category_name = self._name)
-        systematic_is_compatible = self._key_creator.matches_generic_systematic_key(  
-            tocheck = process.key_systematic_hist, 
-            process_name = process.name,
-            category_name = self._name)
-        return (nominal_is_compatible and systematic_is_compatible)
+        returnval = True
+        if check_nominal:
+            nominal_is_compatible = self._key_creator.matches_generic_nominal_key(  
+                tocheck = process.key_nominal_hist, 
+                process_name = process.name,
+                channel_name = self._name)
+            returnval = returnval and nominal_is_compatible
+        if check_systs:
+            systematic_is_compatible = self._key_creator.matches_generic_systematic_key(  
+                tocheck = process.key_systematic_hist, 
+                process_name = process.name,
+                channel_name = self._name)
+            returnval = returnval and systematic_is_compatible
+        return returnval
 
 
     def add_from_csv(self,pathToFile,signaltag="ttH",lumi=1.025, bgnorm=1.5):
