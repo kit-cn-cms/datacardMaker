@@ -18,6 +18,7 @@ class analysisObject(object):
         self._categories        = {}
         self._systematics       = {}
         self._groups            = {}
+        self._rateParams        = {}
 
     def __init__(   self, pathToDatacard = "", 
                     processIdentifier = "$PROCESS",
@@ -63,7 +64,9 @@ class analysisObject(object):
                     bkgprc.append(proc)
                 
         return bkgprc
-    
+    @property
+    def rateParams(self):
+        return self._rateParams
 
     def add_category(self, category):
         """
@@ -260,6 +263,7 @@ class analysisObject(object):
                 header_lines            = []
                 #observation_line is not used right now
                 observation_line        = ""
+                rateParam_lines         = []
                 autoMCStats_lines       = []
                 group_lines             = []
                 header_identifier = ["#Combination", "imax", "kmax", "jmax"]
@@ -287,9 +291,12 @@ class analysisObject(object):
                     elif "autoMCStats" in line:
                         autoMCStats_lines.append(line)
                     elif len(line)>=2:
-                        if line.split()[1] in self._value_rules.allowed_types:
+                        kword = line.split()[1]
+                        if kword in self._value_rules.allowed_types:
                             systematic_lines.append(line)
-                        elif line.split()[1] is "group":
+                        elif kword == "rateParam":
+                            rateParam_lines.append(line)
+                        elif kword is "group":
                             group_lines.append(line)
                     elif line.startswith("#"):
                         pass
@@ -304,7 +311,8 @@ class analysisObject(object):
             categories=categories_line.split()
             categories.pop(0)
             self._load_from_datacard_add_categories(list_of_categories= categories,
-                                                list_of_shapelines=shape_lines)
+                                                list_of_shapelines=shape_lines,
+                                                currentDirectory = path.dirname(pathToDatacard))
             
             """
             Create processObjects for each process in a category 
@@ -323,7 +331,8 @@ class analysisObject(object):
             """
             self._load_from_datacard_add_processes(list_of_categories=categoryprocesses,
                 list_of_processes=processes, list_of_processtypes=processtypes,
-                list_of_shapelines=shape_lines,observation_Flag=observation_Flag)
+                list_of_shapelines=shape_lines,observation_Flag=observation_Flag,
+                currentDirectory = path.dirname(pathToDatacard))
 
             for category in self._categories:
                 if not self._categories[category].observation:
@@ -339,6 +348,8 @@ class analysisObject(object):
                 handles autoMCStats
                 """
                 self._load_from_datacard_add_autoMCStats(autoMCstats_lines=autoMCStats_lines)
+
+                self._rateParams = rateParam_lines
                 """
                 reads groups
                 """
@@ -350,7 +361,7 @@ class analysisObject(object):
             print "could not load %s: no such file" % pathToDatacard
 
 
-    def _load_from_datacard_add_categories(self,list_of_categories,list_of_shapelines):
+    def _load_from_datacard_add_categories(self,list_of_categories,list_of_shapelines, currentDirectory):
         """
         Line for categories: careful with combined categories, 
         key logic wont be working cause channels will be numerated
@@ -362,13 +373,24 @@ class analysisObject(object):
             process_name    = shape[1]
             file            = shape[3]
             histname        = shape[4]
-            systname        = shape[5]
+            try:
+                systname        = shape[5]
+            except:
+                if not process_name == "*":
+                    systname = histname
+                else:
+                    msg = "Could not find name template for systematics!\n"
+                    msg += "Offending line:"
+                    msg += shapelines
+                    raise ValueError(msg)
+            if not path.isabs(file):
+                file = path.join(currentDirectory, file)
             if category_name == "*" and process_name == "*":
-                print "DEBUG"
-                for category in list_of_categories:
-                    self.create_category(categoryName=category,
-                    default_file=file,generic_key_systematic_hist=systname,
-                    generic_key_nominal_hist=histname)
+                    print "loading categories from wildcards"
+                    for category in list_of_categories:
+                        self.create_category(categoryName=category,
+                        default_file=file,generic_key_systematic_hist=systname,
+                        generic_key_nominal_hist=histname)
             elif category_name in list_of_categories and process_name == "*":
                 print "DEBUG1"
                 self.create_category(categoryName=category_name,
@@ -380,7 +402,8 @@ class analysisObject(object):
         
 
     def _load_from_datacard_add_processes(self,list_of_processes,list_of_categories,
-                                        list_of_processtypes,list_of_shapelines,observation_Flag):
+                                        list_of_processtypes,list_of_shapelines,observation_Flag,
+                                        currentDirectory):
         """
         Adds processes to the corresponding categories.
         Initializes process with file and key information.
@@ -390,8 +413,19 @@ class analysisObject(object):
             category_name   = shape[2]
             process_name    = shape[1]
             file            = shape[3]
+            if not path.isabs(file):
+                file = path.join(currentDirectory, file)
             histname        = shape[4]
-            systname        = shape[5]
+            try:
+                systname        = shape[5]
+            except:
+                if process_name == observation_Flag:
+                    systname = histname
+                else:
+                    msg = "Could not find name template for systematics!\n"
+                    msg += "Offending line:"
+                    msg += shapelines
+                    raise ValueError(msg)
             """
             if the process is explicitly written in the file, 
             initialize process with file and key information 
@@ -456,12 +490,20 @@ class analysisObject(object):
             threshold       = line_entries[2]
             include_signal  = line_entries[3]
             hist_mode       = line_entries[4]
-            if category_name in self._categories:
+            if category_name == "*":
+                for c in self._categories:
+                    cat = self._categories[c]
+                    cat.autoMCStats = True
+                    cat.autoMCStats_threshold       = threshold
+                    cat.autoMCStats_include_signal  = include_signal 
+                    cat.autoMCStats_hist_mode       = hist_mode
+            elif category_name in self._categories:
                 category = self._categories[category_name]
                 category.autoMCStats                 = True
                 category.autoMCStats_threshold       = threshold
                 category.autoMCStats_include_signal  = include_signal 
                 category.autoMCStats_hist_mode       = hist_mode
+            
 
     def _load_from_datacard_add_groups(self,list_of_groups):
         for group in list_of_groups:
