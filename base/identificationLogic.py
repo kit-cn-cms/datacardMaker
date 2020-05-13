@@ -268,9 +268,9 @@ class identificationLogic(object):
         """
         temp = tocheck
         if not channel_name is None:
-            if channel_name in temp:
+            if channel_name in temp and self._chIden in self._generic_nom_key:
                 temp = temp.replace(channel_name, self._chIden)
-        if process_name in temp:
+        if process_name in temp and self._procIden in self._generic_nom_key:
             temp = temp.replace(process_name, self._procIden)
         if temp == self._generic_nom_key:
             return True
@@ -284,16 +284,18 @@ class identificationLogic(object):
         with the generic systematic key
         """
         temp = tocheck
-        if not channel_name is None and not channel_name == "":
+        if not channel_name is None and not channel_name == ""\
+             and self._chIden in self._generic_syst_key:
             if channel_name in temp and not self._chIden in temp:
                 temp = temp.replace(channel_name, self._chIden)
-        if process_name in temp and not process_name == "":
+        if process_name in temp and not process_name == ""\
+             and self._procIden in self._generic_syst_key:
             if not self._procIden in temp:
                 temp = temp.replace(process_name, self._procIden)
-        if systematic_name in temp and not systematic_name == "":
+        if systematic_name and not systematic_name == ""\
+             and self._systIden in self._generic_syst_key:
             if not self._systIden in temp:
                 temp = temp.replace(systematic_name, self._systIden)
-
         if temp == self._generic_syst_key:
             return True
         return False
