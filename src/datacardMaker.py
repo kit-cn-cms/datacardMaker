@@ -18,7 +18,7 @@ class datacardMaker(object):
         self._hardcode_numbers = False
         self._replace_files = False
         self._relative_paths = False
-        self._autoMCStats=False
+        self._autoMCStats=True
         self._template_autoMCStats = "%(CATEGORY)s autoMCStats %(THRESHOLD)s %(SIGNAL)s %(HISTMODE)s"
 
     def __init__(   self, analysis = None,
@@ -151,7 +151,11 @@ class datacardMaker(object):
         """
         creates block for autoMCstats
         """
+        if not len(analysis.rateParams) == 0:
+            content.append("\n".join(analysis.rateParams))
+        print "creating autoMCStats block"
         autoMCstats_block=self.create_autoMCStats_block(analysis=analysis)
+        print autoMCstats_block
         if self._autoMCStats:
             content.append(autoMCstats_block)
 
@@ -253,7 +257,10 @@ class datacardMaker(object):
         #adds the process keys (need to add: only add process key if it doesnt match the generic key)
         for process in category:
             file=category[process].file
-            if not file == category.default_file:
+            if not file == category.default_file or not category.is_compatible_with_default(category[process]):
+                print "Will write shape line for process {}".format(process)
+                print "files: process = {}, default = {}".format(file, category.default_file)
+                print "is compatible: {}".format(category.is_compatible_with_default(category[process]))
                 if self.relative_paths:
                     dirname = path.dirname(self.outputpath)
                     file = path.relpath(file,dirname)
@@ -263,7 +270,9 @@ class datacardMaker(object):
                     line.append(self.write_keyword_block_line(process_name=process,category_name=category.name,file=file,
                         nominal_key=key_nominal_hist,syst_key=key_systematic_hist,size=size,sizekeys=sizekeys))
         data_obs = category.observation
-        if not data_obs is None and not data_obs.file == category.default_file:
+        checks = [data_obs.file == category.default_file]
+        checks.append(category.is_compatible_with_default(process = data_obs, check_systs = False))
+        if not data_obs is None and not all(x for x in checks):
             file = data_obs.file
             if self.relative_paths:
                     dirname = path.dirname(self.outputpath)
